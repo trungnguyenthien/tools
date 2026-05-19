@@ -150,7 +150,7 @@ if __FILE__ == $0
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Bộ Công Cụ Tiện Ích Trình Duyệt</title>
-        <link rel="stylesheet" href="./global.css">
+        <link rel="stylesheet" href="./global.css?v=1.1">
       </head>
       <body>
         <div class="container">
