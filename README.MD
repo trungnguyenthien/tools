@@ -2,7 +2,7 @@
 
 Chào mừng bạn đến với kho lưu trữ các công cụ tiện ích nhỏ gọn, chạy trực tiếp hoàn toàn trên trình duyệt của bạn (Client-side) mà không cần cài đặt hay gửi dữ liệu lên server, đảm bảo tính riêng tư và tốc độ xử lý tối đa.
 
-Link: https://trungnguyenthien.github.io/tools
+👋 **Link:** [https://trungnguyenthien.github.io/tools](https://trungnguyenthien.github.io/tools)
 
 ---
 
