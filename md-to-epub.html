@@ -1,305 +1,29 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Markdown → EPUB Converter</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:wght@300;400;600&display=swap"
-    rel="stylesheet">
+  <link rel="stylesheet" href="./global.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
-  <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    :root {
-      --bg: #0f0e0c;
-      --bg2: #1a1916;
-      --bg3: #242320;
-      --border: #333230;
-      --cream: #e8e0d0;
-      --muted: #8a8070;
-      --accent: #c9a84c;
-      --green: #7c9e78;
-      --danger: #c05050;
-      --radius: 8px;
-      --mono: 'JetBrains Mono', monospace;
-      --serif: 'Crimson Pro', Georgia, serif;
-      --display: 'Playfair Display', Georgia, serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--cream);
-      font-family: var(--serif);
-      font-size: 17px;
-      line-height: 1.7;
-      min-height: 100vh;
-    }
-
-    .shell {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 3rem 2rem 6rem;
-    }
-
-    header {
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 2rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .logo {
-      font-family: var(--display);
-      font-size: 2rem;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-    }
-
-    .logo span {
-      color: var(--accent);
-    }
-
-    .tagline {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-top: 0.4rem;
-    }
-
-    .panel {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .panel-title {
-      font-family: var(--display);
-      font-size: 1.1rem;
-      margin-bottom: 1.25rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .badge {
-      font-family: var(--mono);
-      font-size: 10px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      color: var(--muted);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
-
-    .dropzone {
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius);
-      padding: 2rem 1.5rem;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      position: relative;
-    }
-
-    .dropzone:hover,
-    .dropzone.over {
-      border-color: var(--accent);
-      background: rgba(201, 168, 76, 0.04);
-    }
-
-    .dropzone input[type="file"] {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-
-    .dz-icon {
-      font-size: 2rem;
-      color: var(--muted);
-      margin-bottom: 0.4rem;
-    }
-
-    .dz-text {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .dz-text strong {
-      color: var(--cream);
-    }
-
-    .file-list {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .file-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.5rem 0.9rem;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-
-    .file-row .fname {
-      flex: 1;
-      color: var(--cream);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .file-row .fstatus {
-      min-width: 100px;
-      text-align: right;
-      font-size: 11px;
-    }
-
-    .file-row .rm {
-      cursor: pointer;
-      color: var(--muted);
-      font-size: 16px;
-      line-height: 1;
-      padding: 0 2px;
-      transition: color 0.15s;
-    }
-
-    .file-row .rm:hover {
-      color: var(--danger);
-    }
-
-    .st-wait {
-      color: var(--muted);
-    }
-
-    .st-proc {
-      color: var(--accent);
-    }
-
-    .st-done {
-      color: var(--green);
-    }
-
-    .st-err {
-      color: var(--danger);
-    }
-
-
-
-    .file-row .btn-convert-row {
-      background: var(--accent);
-      color: #1a1400;
-      border: none;
-      font-family: var(--mono);
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 4px;
-      padding: 4px 10px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      margin-right: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .file-row .btn-convert-row:hover {
-      opacity: 0.9;
-    }
-
-    .file-row .btn-convert-row:active {
-      transform: scale(0.95);
-    }
-
-    .file-row .btn-convert-row:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .log-wrap {
-      display: none;
-      margin-top: 1.5rem;
-    }
-
-    .log-wrap.visible {
-      display: block;
-    }
-
-    .log-label {
-      font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
-    }
-
-    .log {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-      max-height: 240px;
-      overflow-y: auto;
-      line-height: 1.8;
-    }
-
-    .log .ok {
-      color: var(--green);
-    }
-
-    .log .err {
-      color: var(--danger);
-    }
-
-    .log .inf {
-      color: var(--accent);
-    }
-
-    .log .hd {
-      color: var(--cream);
-      margin-top: 0.25rem;
-    }
-  </style>
 </head>
-
 <body>
   <div class="shell">
+    <a href="./index.html" class="back-home">
+      <i class="ti ti-arrow-left" aria-hidden="true"></i> Quay lại trang chủ
+    </a>
 
     <header>
-      <div class="logo">Markdown <span>→</span> EPUB</div>
-      <div class="tagline">Batch converter · runs entirely in your browser</div>
+      <div class="logo">Markdown → EPUB</div>
+      <p class="tagline">Batch converter · runs entirely in your browser</p>
     </header>
 
     <div class="panel">
       <div class="panel-title">Select Markdown files <span class="badge">bắt buộc</span></div>
       <div class="dropzone" id="md-drop">
         <input type="file" id="md-file" accept=".md,.markdown,.txt" multiple>
-        <div class="dz-icon">📄</div>
+        <div class="dz-icon"><i class="ti ti-markdown" aria-hidden="true"></i></div>
         <div class="dz-text">Kéo thả file <strong>.md</strong> vào đây — chọn nhiều file cùng lúc</div>
       </div>
       <div class="file-list" id="md-list"></div>
@@ -309,8 +33,8 @@
       <div class="log-label">Log</div>
       <div class="log" id="log"></div>
     </div>
-
   </div>
+
   <script>
     var mdFiles = new Map(); // id -> {id, name, baseName, content}
     var fileSeq = 0;
@@ -579,10 +303,7 @@
       setRowStatus(entry.id, 'st-done', '✓ xong');
     }
 
-
-
     setupMdDrop();
   </script>
 </body>
-
 </html>
