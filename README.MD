@@ -42,7 +42,19 @@ Chào mừng bạn đến với kho lưu trữ các công cụ tiện ích nhỏ
 
 ---
 
+### 4. 🛡️ [Censor Secret](./sensor-secret.html)
+*Công cụ lọc và che giấu các thông tin nhạy cảm trong văn bản trước khi chia sẻ.*
+- **Tính năng nổi bật:**
+  - **Nhận diện thông minh:** Tự động quét và phát hiện các loại dữ liệu nhạy cảm bao gồm: địa chỉ Email, số điện thoại, chuỗi Base64 dài, UUID v4/v1 và các định dạng API key / Hex Secret thông dụng.
+  - **Hai chế độ ẩn danh:** 
+    - *Thay thế Placeholder:* Ẩn hoàn toàn bằng các khóa đại diện mang tính nhất quán ngữ nghĩa (như `{EMAIL_1}`, `{UUID_2}`) để giữ nguyên mối liên kết giữa các biến khi gửi cho AI.
+    - *Che giấu một phần:* Chỉ giữ lại 8 ký tự đầu tiên để đối chiếu và ẩn hoàn toàn phần còn lại (ví dụ: `abc123de...`).
+  - **Bảng ánh xạ đối chiếu:** Tự động tạo bảng đối chiếu chi tiết giữa giá trị gốc và giá trị thay thế cục bộ để người dùng dễ dàng khôi phục khi cần thiết.
+  - **Bảo mật tuyệt đối:** Lọc và xử lý hoàn toàn bằng biểu thức chính quy (Regex) cục bộ trên trình duyệt, cam kết không truyền bất kỳ thông tin nào ra bên ngoài.
+
+---
+
 ## 🚀 Cách sử dụng
 1. Tải toàn bộ mã nguồn về máy hoặc truy cập trực tiếp qua GitHub Pages.
-2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html`, `md-to-epub.html` hoặc `secret-key-gen.html`) để mở trên trình duyệt.
+2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html`, `md-to-epub.html`, `secret-key-gen.html` hoặc `sensor-secret.html`) để mở trên trình duyệt.
 3. Không cần cài đặt môi trường hay máy chủ bổ sung!
