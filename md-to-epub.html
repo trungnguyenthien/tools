@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown → EPUB Converter</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=Crimson+Pro:wght@300;400;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f0e0c;
+      --bg2: #1a1916;
+      --bg3: #242320;
+      --border: #333230;
+      --cream: #e8e0d0;
+      --muted: #8a8070;
+      --accent: #c9a84c;
+      --green: #7c9e78;
+      --danger: #c05050;
+      --radius: 8px;
+      --mono: 'JetBrains Mono', monospace;
+      --serif: 'Crimson Pro', Georgia, serif;
+      --display: 'Playfair Display', Georgia, serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: var(--serif);
+      font-size: 17px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem 2rem 6rem;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo {
+      font-family: var(--display);
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .tagline {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: 0.4rem;
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .panel-title {
+      font-family: var(--display);
+      font-size: 1.1rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .dropzone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .dropzone:hover,
+    .dropzone.over {
+      border-color: var(--accent);
+      background: rgba(201, 168, 76, 0.04);
+    }
+
+    .dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .dz-icon {
+      font-size: 2rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .dz-text {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .dz-text strong {
+      color: var(--cream);
+    }
+
+    .file-list {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .file-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.9rem;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .file-row .fname {
+      flex: 1;
+      color: var(--cream);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-row .fstatus {
+      min-width: 100px;
+      text-align: right;
+      font-size: 11px;
+    }
+
+    .file-row .rm {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.15s;
+    }
+
+    .file-row .rm:hover {
+      color: var(--danger);
+    }
+
+    .st-wait {
+      color: var(--muted);
+    }
+
+    .st-proc {
+      color: var(--accent);
+    }
+
+    .st-done {
+      color: var(--green);
+    }
+
+    .st-err {
+      color: var(--danger);
+    }
+
+
+
+    .file-row .btn-convert-row {
+      background: var(--accent);
+      color: #1a1400;
+      border: none;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-right: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .file-row .btn-convert-row:hover {
+      opacity: 0.9;
+    }
+
+    .file-row .btn-convert-row:active {
+      transform: scale(0.95);
+    }
+
+    .file-row .btn-convert-row:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .log-wrap {
+      display: none;
+      margin-top: 1.5rem;
+    }
+
+    .log-wrap.visible {
+      display: block;
+    }
+
+    .log-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .log {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      max-height: 240px;
+      overflow-y: auto;
+      line-height: 1.8;
+    }
+
+    .log .ok {
+      color: var(--green);
+    }
+
+    .log .err {
+      color: var(--danger);
+    }
+
+    .log .inf {
+      color: var(--accent);
+    }
+
+    .log .hd {
+      color: var(--cream);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shell">
+
+    <header>
+      <div class="logo">Markdown <span>→</span> EPUB</div>
+      <div class="tagline">Batch converter · runs entirely in your browser</div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-title">Select Markdown files <span class="badge">bắt buộc</span></div>
+      <div class="dropzone" id="md-drop">
+        <input type="file" id="md-file" accept=".md,.markdown,.txt" multiple>
+        <div class="dz-icon">📄</div>
+        <div class="dz-text">Kéo thả file <strong>.md</strong> vào đây — chọn nhiều file cùng lúc</div>
+      </div>
+      <div class="file-list" id="md-list"></div>
+    </div>
+
+    <div class="log-wrap" id="log-wrap">
+      <div class="log-label">Log</div>
+      <div class="log" id="log"></div>
+    </div>
+
+  </div>
+  <script>
+    var mdFiles = new Map(); // id -> {id, name, baseName, content}
+    var fileSeq = 0;
+
+    function setupMdDrop() {
+      var drop = document.getElementById('md-drop');
+      var inp = document.getElementById('md-file');
+      drop.addEventListener('dragover', function (e) { e.preventDefault(); drop.classList.add('over'); });
+      drop.addEventListener('dragleave', function () { drop.classList.remove('over'); });
+      drop.addEventListener('drop', function (e) {
+        e.preventDefault(); drop.classList.remove('over');
+        addMdFiles(Array.prototype.slice.call(e.dataTransfer.files));
+      });
+      inp.addEventListener('change', function (e) {
+        addMdFiles(Array.prototype.slice.call(e.target.files));
+        e.target.value = '';
+      });
+    }
+
+    function addMdFiles(files) {
+      files.filter(function (f) { return /\.(md|markdown|txt)$/i.test(f.name); })
+        .forEach(function (f) {
+          var id = ++fileSeq;
+          var normName = f.name.normalize ? f.name.normalize('NFC') : f.name;
+          var baseName = normName.replace(/\.(md|markdown|txt)$/i, '');
+          mdFiles.set(id, { id: id, name: normName, baseName: baseName, content: null });
+          renderMdList();
+          var reader = new FileReader();
+          reader.onload = (function (capturedId) {
+            return function (ev) {
+              var entry = mdFiles.get(capturedId);
+              if (entry) { entry.content = ev.target.result; renderMdList(); }
+            };
+          })(id);
+          reader.readAsText(f, 'utf-8');
+        });
+    }
+
+    function removeMdFile(id) { mdFiles.delete(id); renderMdList(); }
+
+    function convertSingleFile(id) {
+      var entry = mdFiles.get(id);
+      if (!entry || entry.content === null) return;
+      var btn = document.getElementById('btn-' + id);
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ ...'; }
+      document.getElementById('log-wrap').classList.remove('visible');
+
+      buildEpub(entry, '', 'vi').then(() => {
+        if (btn) { btn.disabled = false; btn.textContent = '✓ converted'; }
+      }).catch(e => {
+        addLog('  ✗ Lỗi "' + entry.name + '": ' + e.message, 'err');
+        setRowStatus(entry.id, 'st-err', '✗ lỗi');
+        if (btn) { btn.disabled = false; btn.textContent = ' convert to EPUB '; }
+      });
+    }
+
+    function renderMdList() {
+      var el = document.getElementById('md-list');
+      el.innerHTML = '';
+      mdFiles.forEach(function (f) {
+        var row = document.createElement('div');
+        row.className = 'file-row';
+        row.id = 'row-' + f.id;
+        var loaded = f.content !== null;
+        row.innerHTML =
+          '<span class="fname">' + escHtml(f.name) + '</span>' +
+          (loaded ? '<button class="btn-convert-row" id="btn-' + f.id + '" onclick="convertSingleFile(' + f.id + ')">convert to EPUB</button>' : '') +
+          '<span class="fstatus ' + (loaded ? 'st-done' : 'st-proc') + '">' +
+          (loaded ? '✓ sẵn sàng' : '⟳ đang đọc') + '</span>' +
+          '<span class="rm" onclick="removeMdFile(' + f.id + ')">×</span>';
+        el.appendChild(row);
+      });
+    }
+
+    function setRowStatus(id, cls, text) {
+      var row = document.getElementById('row-' + id);
+      if (!row) return;
+      var s = row.querySelector('.fstatus');
+      if (s) { s.className = 'fstatus ' + cls; s.textContent = text; }
+    }
+
+    function uid() { return Math.random().toString(36).slice(2, 8); }
+    function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    async function fetchImageAsBase64(url) {
+      var enc = encodeURIComponent(url);
+      var fetches = [
+        url, // 1. Xem xét lấy trực tiếp trước nếu host không giới hạn CORS
+        'https://corsproxy.io/?' + enc, // 2. Proxy bypass 1
+        'https://api.allorigins.win/raw?url=' + enc, // 3. Proxy bypass 2
+        'https://api.codetabs.com/v1/proxy?quest=' + enc // 4. Proxy bypass 3
+      ];
+
+      var lastErr;
+      for (var i = 0; i < fetches.length; i++) {
+        try {
+          var resp = await fetch(fetches[i], { cache: 'no-store' });
+          if (!resp.ok) {
+            lastErr = new Error('HTTP ' + resp.status);
+            continue;
+          }
+          var blob = await resp.blob();
+          // Nếu server trả về lỗi dạng văn bản thay vì ảnh
+          if (blob.type && blob.type.includes('text/html')) {
+            lastErr = new Error('Proxy error (HTML returned)');
+            continue;
+          }
+          return await new Promise(function (res, rej) {
+            var r = new FileReader();
+            r.onload = function (ev) { res({ b64: ev.target.result.split(',')[1], mime: blob.type }); };
+            r.onerror = rej;
+            r.readAsDataURL(blob);
+          });
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr;
+    }
+    function mimeFromExt(ext) {
+      var m = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp' };
+      return m[(ext || '').toLowerCase()] || 'image/png';
+    }
+    function addLog(msg, cls) {
+      var wrap = document.getElementById('log-wrap');
+      var el = document.getElementById('log');
+      wrap.classList.add('visible');
+      var line = document.createElement('div');
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      el.appendChild(line);
+      el.scrollTop = el.scrollHeight;
+    }
+    function triggerDownload(blob, filename) {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    }
+
+    async function buildEpub(entry, author, lang) {
+      var title = entry.baseName;
+      var bookId = 'book-' + uid();
+      var outFile = entry.baseName + '.epub';
+      setRowStatus(entry.id, 'st-proc', '⟳ đang xử lý');
+      addLog('── ' + entry.name, 'hd');
+
+      var imgRefs = new Map();
+      var imgItems = [];
+      var mdImgRe = /!\[([^\]]*)\]\(([^)]+)\)/g;
+      var htmlImgRe = /<img[^>]+src=["']([^"']+)["']/gi;
+      var allSrcs = new Set();
+      var m;
+      while ((m = mdImgRe.exec(entry.content)) !== null) {
+        var rawUrl = m[2].split(/[\s'"]/)[0].trim();
+        if (rawUrl) allSrcs.add(rawUrl);
+      }
+      while ((m = htmlImgRe.exec(entry.content)) !== null) {
+        if (m[1]) allSrcs.add(m[1].trim());
+      }
+      addLog('  ' + allSrcs.size + ' ảnh tìm thấy');
+
+      for (var src of allSrcs) {
+        var ext = (src.split('.').pop().split('?')[0] || 'png');
+        var safeId = 'img_' + uid();
+        var epubPath = 'images/' + safeId + '.' + ext;
+        try {
+          var b64, mime;
+          if (/^https?:\/\//.test(src)) {
+            addLog('  ↓ ' + (src.length > 64 ? src.slice(0, 61) + '...' : src));
+            var r = await fetchImageAsBase64(src);
+            b64 = r.b64; mime = r.mime || mimeFromExt(ext);
+          } else {
+            addLog('  ⚠ Bỏ qua ảnh không hợp lệ hoặc local: "' + src + '"', 'err');
+            continue;
+          }
+          imgRefs.set(src, epubPath);
+          imgItems.push({ id: safeId, href: epubPath, mime: mime, b64: b64 });
+        } catch (e) {
+          addLog('  ✗ lỗi ảnh "' + src + '": ' + e.message, 'err');
+        }
+      }
+
+      var mdProc = entry.content;
+      imgRefs.forEach(function (path, orig) {
+        var esc = orig.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        mdProc = mdProc.replace(new RegExp(esc, 'g'), path);
+      });
+
+      marked.setOptions({ gfm: true, breaks: true });
+      var rawHtml = marked.parse(mdProc);
+      var parser = new DOMParser();
+      var dom = parser.parseFromString('<div id="r">' + rawHtml + '</div>', 'text/html');
+      var ser = new XMLSerializer();
+      var body = ser.serializeToString(dom.getElementById('r'))
+        .replace(/^<div[^>]*>/, '').replace(/<\/div>$/, '')
+        .replace(/ xmlns="http:\/\/www\.w3\.org\/1999\/xhtml"/g, '');
+
+      var modDate = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      var CSS = 'body{font-family:Georgia,serif;font-size:1em;line-height:1.8;margin:1.5em;color:#1a1a1a}' +
+        'h1,h2,h3,h4,h5,h6{line-height:1.3;margin:1.4em 0 0.5em}' +
+        'h1{font-size:1.9em;border-bottom:1px solid #ddd;padding-bottom:.3em}' +
+        'h2{font-size:1.5em}h3{font-size:1.2em}' +
+        'p{margin:.75em 0}a{color:#2563eb}' +
+        'img{max-width:100%;height:auto;display:block;margin:1em auto}' +
+        'blockquote{border-left:4px solid #ccc;margin:1em 0;padding:.5em 1em;color:#555}' +
+        'code{font-family:monospace;background:#f0f0f0;padding:.1em .3em;font-size:.88em}' +
+        'pre{background:#f5f5f5;padding:1em;overflow:auto}pre code{background:none;padding:0}' +
+        'table{border-collapse:collapse;width:100%;margin:1em 0}' +
+        'th,td{border:1px solid #ddd;padding:.45em .75em}th{background:#f0f0f0}' +
+        'ul,ol{margin:.75em 0;padding-left:1.8em}li{margin:.25em 0}' +
+        'hr{border:none;border-top:1px solid #ddd;margin:2em 0}';
+
+      var contentXhtml =
+        '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' +
+        '<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="' + lang + '" lang="' + lang + '">\n' +
+        '<head><meta charset="utf-8"/>\n<title>' + escHtml(title) + '</title>\n' +
+        '<style type="text/css">' + CSS + '</style>\n</head>\n<body>\n' + body + '\n</body>\n</html>';
+
+      var navXhtml =
+        '<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>\n' +
+        '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" xml:lang="' + lang + '" lang="' + lang + '">\n' +
+        '<head><meta charset="utf-8"/><title>TOC</title></head>\n<body>\n' +
+        '<nav epub:type="toc" id="toc"><ol><li><a href="content.xhtml">' + escHtml(title) + '</a></li></ol></nav>\n' +
+        '</body>\n</html>';
+
+      var manifestItems = imgItems.map(function (i) {
+        return '    <item id="' + i.id + '" href="' + i.href + '" media-type="' + i.mime + '"/>';
+      }).join('\n');
+
+      var opf =
+        '<?xml version="1.0" encoding="utf-8"?>\n' +
+        '<package xmlns="http://www.idpf.org/2007/opf" xmlns:dc="http://purl.org/dc/elements/1.1/" unique-identifier="bookid" version="3.0" xml:lang="' + lang + '">\n' +
+        '  <metadata>\n' +
+        '    <dc:identifier id="bookid">' + bookId + '</dc:identifier>\n' +
+        '    <dc:title>' + escHtml(title) + '</dc:title>\n' +
+        '    <dc:creator>' + escHtml(author || 'Unknown') + '</dc:creator>\n' +
+        '    <dc:language>' + lang + '</dc:language>\n' +
+        '    <meta property="dcterms:modified">' + modDate + '</meta>\n' +
+        '  </metadata>\n  <manifest>\n' +
+        '    <item id="nav"     href="nav.xhtml"     media-type="application/xhtml+xml" properties="nav"/>\n' +
+        '    <item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>\n' +
+        manifestItems + '\n  </manifest>\n' +
+        '  <spine><itemref idref="content"/></spine>\n</package>';
+
+      var containerXml =
+        '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
+        '  <rootfiles>\n' +
+        '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
+        '  </rootfiles>\n</container>';
+
+      var zip = new JSZip();
+      zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
+      zip.file('META-INF/container.xml', containerXml);
+      zip.file('OEBPS/content.xhtml', contentXhtml);
+      zip.file('OEBPS/nav.xhtml', navXhtml);
+      zip.file('OEBPS/content.opf', opf);
+      imgItems.forEach(function (img) { zip.file('OEBPS/' + img.href, img.b64, { base64: true }); });
+
+      var blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' });
+      triggerDownload(blob, outFile);
+      addLog('  ✅ ' + outFile + ' (' + imgItems.length + ' ảnh nhúng)', 'ok');
+      setRowStatus(entry.id, 'st-done', '✓ xong');
+    }
+
+
+
+    setupMdDrop();
+  </script>
+</body>
+
+</html>

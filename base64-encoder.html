@@ -1,0 +1,425 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --brand: #1D9E75;
+    --brand-light: #E1F5EE;
+    --brand-dark: #085041;
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: var(--display); }
+
+  .root { padding: 1.5rem 0; }
+
+  .header { margin-bottom: 1.5rem; }
+  .header h1 {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header h1 .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--brand);
+    display: inline-block;
+  }
+  .header p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin-top: 4px;
+    font-weight: 400;
+    font-family: var(--font-sans);
+  }
+
+  .drop-zone {
+    border: 1.5px dashed var(--color-border-secondary);
+    border-radius: var(--border-radius-lg);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--color-background-secondary);
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--brand);
+    background: var(--brand-light);
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .drop-icon {
+    font-size: 36px;
+    color: var(--brand);
+    margin-bottom: 10px;
+  }
+  .drop-zone h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 4px;
+  }
+  .drop-zone p {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+  }
+  .drop-zone .browse-btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 20px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--brand);
+    color: var(--brand-dark);
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--brand-light);
+    cursor: pointer;
+    font-family: var(--display);
+  }
+
+  .results { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+
+  .file-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+  }
+  .file-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--color-background-secondary);
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .file-icon {
+    width: 32px; height: 32px;
+    border-radius: var(--border-radius-md);
+    background: var(--brand-light);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--brand);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .file-meta {
+    font-size: 12px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    margin-top: 2px;
+  }
+  .status-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: var(--font-sans);
+    flex-shrink: 0;
+  }
+  .status-ok { background: #E1F5EE; color: #085041; }
+  .status-err { background: #FCEBEB; color: #A32D2D; }
+  .status-loading { background: #FAEEDA; color: #633806; }
+
+  .b64-preview {
+    padding: 12px 16px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .b64-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-family: var(--font-sans);
+  }
+  .b64-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--color-text-primary);
+    word-break: break-all;
+    line-height: 1.6;
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 10px 12px;
+    max-height: 72px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    position: relative;
+  }
+  .b64-text.expanded { max-height: 9999px; }
+
+  .b64-fade {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 30px;
+    background: linear-gradient(transparent, var(--color-background-secondary));
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .b64-text.expanded .b64-fade { opacity: 0; }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: var(--border-radius-md);
+    border: 0.5px solid var(--color-border-secondary);
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--display);
+    transition: background 0.15s;
+  }
+  .action-btn:hover { background: var(--color-background-secondary); }
+  .action-btn.copied {
+    background: #E1F5EE;
+    border-color: var(--brand);
+    color: #085041;
+  }
+  .action-btn.expand-btn { color: var(--brand-dark); border-color: var(--brand); }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 0.5px solid var(--color-border-tertiary);
+  }
+  .stat-cell {
+    padding: 10px 16px;
+    border-right: 0.5px solid var(--color-border-tertiary);
+    text-align: center;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+    font-family: var(--font-sans);
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    font-family: var(--font-sans);
+  }
+</style>
+
+<div class="root">
+  <div class="header">
+    <h1><span class="dot"></span> Base64 Encoder</h1>
+    <p>Chọn một hoặc nhiều file — plaintext hoặc binary — để mã hóa thành Base64.</p>
+  </div>
+
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" multiple />
+    <div class="drop-icon"><i class="ti ti-upload" aria-hidden="true"></i></div>
+    <h2>Kéo thả file vào đây</h2>
+    <p>Hỗ trợ mọi loại file — text, binary, image, PDF, ...</p>
+    <span class="browse-btn"><i class="ti ti-folder-open" aria-hidden="true"></i> Chọn file</span>
+  </div>
+
+  <div class="results" id="results">
+    <div class="empty-state" id="emptyState">
+      <i class="ti ti-file-off" aria-hidden="true" style="font-size:24px;display:block;margin-bottom:8px;opacity:0.4"></i>
+      Chưa có file nào được chọn
+    </div>
+  </div>
+</div>
+
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const results = document.getElementById('results');
+const emptyState = document.getElementById('emptyState');
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+  return (b / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const map = {
+    pdf: 'ti-file-type-pdf', jpg: 'ti-photo', jpeg: 'ti-photo', png: 'ti-photo',
+    gif: 'ti-photo', svg: 'ti-vector', mp4: 'ti-video', mp3: 'ti-music',
+    zip: 'ti-archive', gz: 'ti-archive', json: 'ti-braces', js: 'ti-brand-javascript',
+    html: 'ti-html', css: 'ti-css', txt: 'ti-txt', md: 'ti-markdown',
+    py: 'ti-brand-python', xml: 'ti-code', csv: 'ti-table',
+  };
+  return map[ext] || 'ti-file';
+}
+
+function processFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const raw = e.target.result;
+      const b64 = btoa(
+        new Uint8Array(raw).reduce((d, b) => d + String.fromCharCode(b), '')
+      );
+      resolve({ name: file.name, size: file.size, b64, ok: true });
+    };
+    reader.onerror = () => resolve({ name: file.name, size: file.size, b64: null, ok: false });
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function createCard(data) {
+  const card = document.createElement('div');
+  card.className = 'file-card';
+
+  const preview = data.b64 ? data.b64.slice(0, 200) : '';
+  const isTruncated = data.b64 && data.b64.length > 200;
+  const b64len = data.b64 ? data.b64.length : 0;
+  const ratio = data.size > 0 ? ((b64len / data.size) * 100).toFixed(0) : 0;
+
+  card.innerHTML = `
+    <div class="file-card-header">
+      <div class="file-icon"><i class="ti ${getFileIcon(data.name)}" aria-hidden="true"></i></div>
+      <div class="file-info">
+        <div class="file-name" title="${data.name}">${data.name}</div>
+        <div class="file-meta">${formatBytes(data.size)}</div>
+      </div>
+      <span class="status-badge ${data.ok ? 'status-ok' : 'status-err'}">
+        <i class="ti ${data.ok ? 'ti-check' : 'ti-x'}" aria-hidden="true"></i>
+        ${data.ok ? 'OK' : 'Lỗi'}
+      </span>
+    </div>
+
+    ${data.ok ? `
+    <div class="b64-preview">
+      <div class="b64-label">Base64 Output</div>
+      <div class="b64-text" id="txt-${data.name}">
+        <span class="b64-content">${preview}${isTruncated ? '<span class="ellipsis" style="color:var(--color-text-secondary)">…</span>' : ''}</span>
+        ${isTruncated ? '<div class="b64-fade"></div>' : ''}
+      </div>
+    </div>
+
+    <div class="card-actions">
+      <button class="action-btn" onclick="copyFull(this, '${encodeURIComponent(data.b64)}')">
+        <i class="ti ti-copy" aria-hidden="true"></i> Copy Base64
+      </button>
+      ${isTruncated ? `<button class="action-btn expand-btn" onclick="toggleExpand(this, '${data.name}', '${encodeURIComponent(data.b64)}')">
+        <i class="ti ti-eye" aria-hidden="true"></i> Xem đầy đủ (${b64len.toLocaleString()} ký tự)
+      </button>` : ''}
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-cell">
+        <div class="stat-num">${b64len.toLocaleString()}</div>
+        <div class="stat-label">Ký tự Base64</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">${formatBytes(data.size)}</div>
+        <div class="stat-label">Kích thước gốc</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-num">${ratio}%</div>
+        <div class="stat-label">Tỉ lệ mở rộng</div>
+      </div>
+    </div>
+    ` : `<div style="padding:12px 16px;font-size:13px;color:var(--color-text-danger);font-family:var(--font-sans)">Không thể đọc file.</div>`}
+  `;
+  return card;
+}
+
+window.copyFull = function(btn, encoded) {
+  const text = decodeURIComponent(encoded);
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Đã copy!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<i class="ti ti-copy" aria-hidden="true"></i> Copy Base64';
+    }, 2000);
+  });
+};
+
+window.toggleExpand = function(btn, name, encoded) {
+  const textEl = document.getElementById('txt-' + name);
+  const content = textEl.querySelector('.b64-content');
+  const isExpanded = textEl.classList.contains('expanded');
+  const fullText = decodeURIComponent(encoded);
+  if (!isExpanded) {
+    content.textContent = fullText;
+    textEl.classList.add('expanded');
+    btn.innerHTML = '<i class="ti ti-eye-off" aria-hidden="true"></i> Thu gọn';
+  } else {
+    content.innerHTML = fullText.slice(0, 200) + '<span style="color:var(--color-text-secondary)">…</span>';
+    textEl.classList.remove('expanded');
+    btn.innerHTML = `<i class="ti ti-eye" aria-hidden="true"></i> Xem đầy đủ (${fullText.length.toLocaleString()} ký tự)`;
+  }
+};
+
+async function handleFiles(files) {
+  if (!files.length) return;
+  emptyState.remove();
+
+  for (const file of files) {
+    const placeholder = document.createElement('div');
+    placeholder.className = 'file-card';
+    placeholder.innerHTML = `
+      <div class="file-card-header">
+        <div class="file-icon"><i class="ti ${getFileIcon(file.name)}" aria-hidden="true"></i></div>
+        <div class="file-info">
+          <div class="file-name">${file.name}</div>
+          <div class="file-meta">${formatBytes(file.size)}</div>
+        </div>
+        <span class="status-badge status-loading"><i class="ti ti-loader-2" aria-hidden="true"></i> Đang xử lý</span>
+      </div>
+    `;
+    results.appendChild(placeholder);
+
+    const data = await processFile(file);
+    const card = createCard(data);
+    results.replaceChild(card, placeholder);
+  }
+}
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+</script>
