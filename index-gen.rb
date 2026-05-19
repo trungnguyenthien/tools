@@ -1,176 +1,135 @@
 require 'cgi'
 
-class GenScript
+class MarkdownParser
+  def self.to_html(markdown)
+    html = []
+    lines = markdown.split("\n")
+    
+    in_code_block = false
+    list_stack = [] # stack of hashes: { type: :ul/:ol, indent: Integer }
+    
+    lines.each do |line|
+      # 1. Handle Code Blocks
+      if line =~ /^```(\w*)/
+        if in_code_block
+          html << "</code></pre>"
+          in_code_block = false
+        else
+          lang = $1
+          html << "<pre><code class=\"language-#{lang}\">"
+          in_code_block = true
+        end
+        next
+      end
+      
+      if in_code_block
+        html << CGI.escapeHTML(line)
+        next
+      end
+      
+      stripped = line.strip
+      
+      # Close lists if blank line
+      if stripped.empty?
+        while !list_stack.empty?
+          html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+        end
+        next
+      end
+      
+      # Horizontal Rule
+      if stripped == '---' || stripped == '***' || stripped == '___'
+        while !list_stack.empty?
+          html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+        end
+        html << "<hr />"
+        next
+      end
+      
+      # Headings (h1 to h6)
+      if stripped =~ /^(\#+)\s+(.*)/
+        while !list_stack.empty?
+          html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+        end
+        level = $1.length
+        content = parse_inline($2)
+        html << "<h#{level}>#{content}</h#{level}>"
+        next
+      end
+      
+      # Blockquotes
+      if stripped =~ /^>\s?(.*)/
+        while !list_stack.empty?
+          html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+        end
+        content = $1
+        html << "<blockquote>#{parse_inline(content)}</blockquote>"
+        next
+      end
+      
+      # Lists (Unordered & Ordered)
+      leading_spaces = line.match(/^(\s*)/)[1].length
+      is_ul = stripped.start_with?('- ') || stripped.start_with?('* ') || stripped.start_with?('+ ')
+      is_ol = stripped =~ /^\d+\.\s(.*)/
+      
+      if is_ul || is_ol
+        type = is_ul ? :ul : :ol
+        content = is_ul ? stripped[2..-1] : stripped.sub(/^\d+\.\s/, '')
+        
+        if list_stack.empty?
+          list_stack << { type: type, indent: leading_spaces }
+          html << (type == :ul ? "<ul>" : "<ol>")
+        elsif leading_spaces > list_stack.last[:indent]
+          list_stack << { type: type, indent: leading_spaces }
+          html << (type == :ul ? "<ul>" : "<ol>")
+        elsif leading_spaces < list_stack.last[:indent]
+          while !list_stack.empty? && leading_spaces < list_stack.last[:indent]
+            html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+          end
+          
+          if !list_stack.empty? && list_stack.last[:indent] == leading_spaces && list_stack.last[:type] != type
+            html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+            list_stack << { type: type, indent: leading_spaces }
+            html << (type == :ul ? "<ul>" : "<ol>")
+          elsif list_stack.empty?
+            list_stack << { type: type, indent: leading_spaces }
+            html << (type == :ul ? "<ul>" : "<ol>")
+          end
+        elsif list_stack.last[:type] != type
+          html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+          list_stack << { type: type, indent: leading_spaces }
+          html << (type == :ul ? "<ul>" : "<ol>")
+        end
+        
+        html << "<li>#{parse_inline(content)}</li>"
+        next
+      end
+      
+      # Paragraph
+      while !list_stack.empty?
+        html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+      end
+      html << "<p>#{parse_inline(stripped)}</p>"
+    end
+    
+    while !list_stack.empty?
+      html << (list_stack.pop[:type] == :ul ? "</ul>" : "</ol>")
+    end
+    
+    html.join("\n")
+  end
+  
   def self.parse_inline(text)
-    # Convert bold **text**
     t = text.dup
+    # Convert bold **text**
     t.gsub!(/\*\*(.*?)\*\*/, '<strong>\1</strong>')
     # Convert italic *text*
     t.gsub!(/\*(.*?)\*/, '<em>\1</em>')
     # Convert inline code `code`
     t.gsub!(/`(.*?)`/, '<code>\1</code>')
     # Convert links [text](url)
-    t.gsub!(/\[(.*?)\]\((.*?)\)/, '<a href="\2" class="tool-link">\1 <span class="arrow">→</span></a>')
+    t.gsub!(/\[(.*?)\]\((.*?)\)/, '<a href="\2">\1</a>')
     t
-  end
-
-  def self.generate(md_content)
-    lines = md_content.split("\n")
-    
-    html = []
-    
-    # State tracking
-    current_section = :hero
-    in_list = false
-    in_sub_list = false
-    
-    html << '<div class="container">'
-    html << '  <header class="hero">'
-    
-    lines.each do |line|
-      stripped = line.strip
-      
-      # Handle horizontal rules
-      if stripped == '---'
-        # Close lists if open
-        if in_sub_list; html << '      </ul>'; in_sub_list = false; end
-        if in_list; html << '    </ul>'; in_list = false; end
-        
-        # Transition section based on where we are
-        if current_section == :hero
-          html << '  </header>'
-          html << '  <section class="privacy-section">'
-          current_section = :privacy
-        elsif current_section == :privacy
-          html << '  </section>'
-          html << '  <section class="tools-section">'
-          html << '    <h2>📌 Danh sách công cụ</h2>'
-          html << '    <div class="tools-grid">'
-          current_section = :tools_grid_open
-        elsif current_section == :tool_card
-          html << '    </div> <!-- /tool-card -->'
-          current_section = :tools_grid_open
-        end
-        next
-      end
-      
-      # Handle blank lines
-      if stripped.empty?
-        next
-      end
-      
-      # Handle Headings
-      if stripped.start_with?('# ')
-        title = stripped[2..-1]
-        html << "    <h1>#{parse_inline(title)}</h1>"
-      elsif stripped.start_with?('## ')
-        heading_text = stripped[3..-1]
-        if heading_text.include?('🔒 Cam kết')
-          html << "    <h2 class=\"privacy-title\">#{parse_inline(heading_text)}</h2>"
-        elsif heading_text.include?('📌 Danh sách')
-          # Already structured as section title, skip duplicate h2
-        elsif heading_text.include?('🚀 Cách sử dụng')
-          # Close previous sections
-          if in_sub_list; html << '      </ul>'; in_sub_list = false; end
-          if in_list; html << '    </ul>'; in_list = false; end
-          if current_section == :tool_card
-            html << '    </div> <!-- /tool-card -->'
-            html << '    </div> <!-- /tools-grid -->'
-            html << '  </section>'
-          elsif current_section == :tools_grid_open
-            html << '    </div> <!-- /tools-grid -->'
-            html << '  </section>'
-          end
-          html << '  <section class="usage-section">'
-          html << "    <h2>🚀 #{parse_inline(heading_text.sub('🚀', '').strip)}</h2>"
-          current_section = :usage
-        else
-          html << "    <h2>#{parse_inline(heading_text)}</h2>"
-        end
-      elsif stripped.start_with?('### ')
-        # Close previous list if any
-        if in_sub_list; html << '      </ul>'; in_sub_list = false; end
-        if in_list; html << '    </ul>'; in_list = false; end
-        
-        # This is a tool! Let's close previous tool card if open
-        if current_section == :tool_card
-          html << '    </div> <!-- /tool-card -->'
-        end
-        
-        tool_title = stripped[4..-1]
-        # Remove numbers like "1. " or "2. " from the start of the title
-        clean_title = tool_title.sub(/^\d+\.\s+/, '')
-        
-        html << '    <div class="tool-card">'
-        html << "      <h3 class=\"tool-card-title\">#{parse_inline(clean_title)}</h3>"
-        current_section = :tool_card
-      # Handle lists
-      elsif stripped.start_with?('- ') || stripped.start_with?('* ')
-        # Sub-list check (indented by 2 or more spaces in original line)
-        is_sub = line.start_with?('  ') || line.start_with?("\t")
-        
-        content = stripped[2..-1]
-        parsed_content = parse_inline(content)
-        
-        if is_sub
-          unless in_sub_list
-            html << '      <ul class="sub-list">'
-            in_sub_list = true
-          end
-          html << "        <li>#{parsed_content}</li>"
-        else
-          if in_sub_list
-            html << '      </ul>'
-            in_sub_list = false
-          end
-          unless in_list
-            html << '    <ul class="feature-list">'
-            in_list = true
-          end
-          html << "      <li>#{parsed_content}</li>"
-        end
-      elsif stripped =~ /^\d+\.\s+(.*)/
-        # Numbered list for usage
-        content = stripped.sub(/^\d+\.\s+/, '')
-        unless in_list
-          html << '    <ol class="usage-list">'
-          in_list = true
-        end
-        html << "      <li>#{parse_inline(content)}</li>"
-      else
-        # Normal paragraph or italic intro
-        if stripped.start_with?('*') && stripped.end_with?('*')
-          # Italic subtitle/tagline for tool
-          text = stripped[1..-2]
-          html << "      <p class=\"tool-tagline\">#{parse_inline(text)}</p>"
-        else
-          html << "    <p>#{parse_inline(stripped)}</p>"
-        end
-      end
-    end
-    
-    # Close any open elements at the end
-    if in_sub_list; html << '      </ul>'; end
-    if in_list
-      if current_section == :usage
-        html << '    </ol>'
-      else
-        html << '    </ul>'
-      end
-    end
-    if current_section == :tool_card
-      html << '    </div> <!-- /tool-card -->'
-      html << '    </div> <!-- /tools-grid -->'
-      html << '  </section>'
-    elsif current_section == :tools_grid_open
-      html << '    </div> <!-- /tools-grid -->'
-      html << '  </section>'
-    elsif current_section == :usage
-      html << '  </section>'
-    end
-    
-    html << '</div> <!-- /container -->'
-    html.join("\n")
   end
 end
 
@@ -182,7 +141,7 @@ if __FILE__ == $0
     end
 
     md_content = File.read("README.MD")
-    html_body = GenScript.generate(md_content)
+    html_body = MarkdownParser.to_html(md_content)
     
     template = <<~HTML
       <!DOCTYPE html>
@@ -206,8 +165,6 @@ if __FILE__ == $0
             --accent-green: #10b981;
             --accent-purple: #818cf8;
             --glow-blue: rgba(56, 189, 248, 0.15);
-            --glow-green: rgba(16, 185, 129, 0.12);
-            --glow-purple: rgba(129, 140, 248, 0.15);
             --font-display: 'Outfit', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
           }
@@ -234,328 +191,149 @@ if __FILE__ == $0
           }
 
           .container {
-            max-width: 1040px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 4rem 2rem;
             width: 100%;
             flex: 1;
           }
 
-          header.hero {
-            text-align: center;
-            margin-bottom: 4rem;
-            position: relative;
-          }
-
-          header.hero h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1.2;
-            background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 50%, #38bdf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1.5rem;
-            display: inline-block;
-          }
-
-          header.hero p {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            max-width: 680px;
-            margin: 0 auto;
-            font-weight: 400;
-          }
-
-          /* Privacy Card styling */
-          .privacy-section {
-            background: rgba(16, 185, 129, 0.04);
-            border: 1px solid rgba(16, 185, 129, 0.15);
-            border-radius: 20px;
-            padding: 2.5rem;
-            margin-bottom: 4rem;
+          /* General Markdown Styling */
+          .markdown-body {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3.5rem;
             backdrop-filter: blur(12px);
-            box-shadow: 0 10px 30px -10px var(--glow-green);
-            position: relative;
-            overflow: hidden;
-          }
-
-          .privacy-section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(16, 185, 129, 0.05) 0%, transparent 70%);
-            pointer-events: none;
-          }
-
-          .privacy-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #34d399;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            border: none;
-            padding-bottom: 0;
-          }
-
-          .privacy-section ul.feature-list {
-            list-style: none;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-          }
-
-          .privacy-section ul.feature-list > li {
-            position: relative;
-            padding-left: 2rem;
-            font-size: 1.05rem;
-            color: var(--text-primary);
-          }
-
-          .privacy-section ul.feature-list > li::before {
-            content: '✓';
-            position: absolute;
-            left: 0;
-            color: #34d399;
-            font-weight: 900;
-            font-size: 1.2rem;
-            line-height: 1.2;
-          }
-
-          .privacy-section ul.feature-list > li strong {
-            color: #34d399;
-            display: block;
-            margin-bottom: 0.25rem;
-          }
-
-          /* Tools Section */
-          .tools-section h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-          }
-
-          .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 2rem;
-            margin-bottom: 4rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
           }
 
           @media (max-width: 768px) {
-            .tools-grid {
-              grid-template-columns: 1fr;
+            .container {
+              padding: 2rem 1rem;
             }
-            header.hero h1 {
-              font-size: 2.2rem;
+            .markdown-body {
+              padding: 2rem 1.5rem;
             }
           }
 
-          .tool-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2.5rem;
-            backdrop-filter: blur(12px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
-          }
-
-          .tool-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.03) 0%, transparent 60%);
-            pointer-events: none;
-            transition: opacity 0.3s;
-            opacity: 0.5;
-          }
-
-          .tool-card:hover {
-            transform: translateY(-6px);
-            border-color: var(--border-hover);
-            box-shadow: 
-              0 20px 40px -15px rgba(0, 0, 0, 0.4),
-              0 0 40px -10px var(--glow-blue);
-          }
-
-          .tool-card:hover::before {
-            opacity: 1;
-          }
-
-          .tool-card-title {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-          }
-
-          .tool-card-title a {
-            color: var(--text-primary);
-            text-decoration: none;
-            transition: color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-          }
-
-          .tool-card-title a:hover {
-            color: var(--accent-blue);
-          }
-
-          .tool-card-title a .arrow {
-            font-size: 1.2rem;
-            transition: transform 0.2s;
-            display: inline-block;
-          }
-
-          .tool-card:hover .tool-card-title a .arrow {
-            transform: translateX(4px);
-          }
-
-          .tool-tagline {
-            font-size: 1.05rem;
-            font-style: italic;
-            color: var(--text-secondary);
+          .markdown-body h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
             margin-bottom: 2rem;
-            line-height: 1.5;
+            background: linear-gradient(135deg, #f1f5f9 20%, #94a3b8 50%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 1rem;
+            line-height: 1.25;
           }
 
-          /* Inner lists in cards */
-          .tool-card ul.feature-list {
-            list-style: none;
-            margin-top: auto;
+          .markdown-body h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 2.5rem;
+            margin-bottom: 1.2rem;
+            color: #f1f5f9;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 0.5rem;
           }
 
-          .tool-card ul.feature-list > li {
-            font-size: 1rem;
+          .markdown-body h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #e2e8f0;
+          }
+
+          .markdown-body p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+          }
+
+          .markdown-body a {
+            color: var(--accent-blue);
+            text-decoration: none;
+            border-bottom: 1px dashed rgba(56, 189, 248, 0.4);
+            transition: all 0.2s;
+            font-weight: 500;
+          }
+
+          .markdown-body a:hover {
+            color: #56caff;
+            border-bottom: 1px solid var(--accent-blue);
+          }
+
+          .markdown-body ul, .markdown-body ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+          }
+
+          .markdown-body li {
+            margin-bottom: 0.6rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+          }
+
+          .markdown-body li strong {
             color: var(--text-primary);
-            line-height: 1.5;
+          }
+
+          .markdown-body ul ul, .markdown-body ol ol, 
+          .markdown-body ul ol, .markdown-body ol ul {
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
+            padding-left: 1rem;
+            list-style-type: circle;
+          }
+
+          .markdown-body hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            margin: 3.5rem 0;
+          }
+
+          .markdown-body blockquote {
+            background: rgba(56, 189, 248, 0.04);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: 0 12px 12px 0;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #e2e8f0;
+          }
+
+          .markdown-body blockquote p {
+            margin-bottom: 0;
+            color: #cbd5e1;
+            font-size: 1.05rem;
+          }
+
+          .markdown-body pre {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 1.25rem;
+            overflow-x: auto;
             margin-bottom: 1.5rem;
           }
 
-          .tool-card ul.feature-list > li:last-child {
-            margin-bottom: 0;
-          }
-
-          .tool-card ul.feature-list > li > strong {
-            color: var(--accent-blue);
-            display: block;
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-          }
-
-          .tool-card ul.sub-list {
-            list-style: none;
-            margin-top: 0.75rem;
-            padding-left: 1rem;
-            border-left: 1px solid rgba(255, 255, 255, 0.08);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-
-          .tool-card ul.sub-list > li {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-            position: relative;
-            padding-left: 1.25rem;
-          }
-
-          .tool-card ul.sub-list > li::before {
-            content: '•';
-            position: absolute;
-            left: 0;
-            color: rgba(255, 255, 255, 0.3);
-          }
-
-          .tool-card ul.sub-list > li strong {
-            color: var(--text-primary);
-            font-weight: 500;
-          }
-          
-          code {
+          .markdown-body code {
             font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #e2e8f0;
+          }
+
+          .markdown-body :not(pre) > code {
             background: rgba(255, 255, 255, 0.08);
             padding: 0.15rem 0.4rem;
             border-radius: 4px;
-            font-size: 0.88em;
-            color: #e2e8f0;
+            font-size: 0.85em;
             border: 1px solid rgba(255, 255, 255, 0.04);
-          }
-
-          /* Usage Guide */
-          .usage-section {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            padding: 2.5rem;
-            backdrop-filter: blur(12px);
-            margin-bottom: 2rem;
-          }
-
-          .usage-section h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 1.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-          }
-
-          .usage-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-          }
-
-          .usage-list > li {
-            position: relative;
-            padding-left: 3rem;
-            font-size: 1.05rem;
-            color: var(--text-primary);
-          }
-
-          .usage-list > li::before {
-            counter-increment: step-counter;
-            content: counter(step-counter);
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 2.2rem;
-            height: 2.2rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: #020617;
-          }
-
-          body {
-            counter-reset: step-counter;
           }
 
           footer {
@@ -582,7 +360,11 @@ if __FILE__ == $0
         </style>
       </head>
       <body>
-        [HTML_CONTENT]
+        <div class="container">
+          <article class="markdown-body">
+            [HTML_CONTENT]
+          </article>
+        </div>
         <footer>
           <p>⚡ 100% Client-side • Bảo mật & Riêng tư hoàn hảo</p>
           <p style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.7;">
