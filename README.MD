@@ -32,7 +32,17 @@ Chào mừng bạn đến với kho lưu trữ các công cụ tiện ích nhỏ
 
 ---
 
+### 3. 🔑 [Secret Key Generator](./secret-key-gen.html)
+*Công cụ sinh mã khóa bảo mật ngẫu nhiên với độ an toàn mã hóa cao.*
+- **Tính năng nổi bật:**
+  - **Đa dạng định dạng:** Hỗ trợ sinh khóa Hexadecimal (API key, Salts), Base64 (JWT Secret, HMAC), Base64URL (URL-safe Session Token), UUID v4 (ID duy nhất), Mật khẩu gợi nhớ (Memorable Passphrase) và Mật khẩu phức tạp tùy chỉnh.
+  - **An toàn tuyệt đối:** Sử dụng bộ sinh số ngẫu nhiên bảo mật của trình duyệt (`window.crypto.getRandomValues`), hoạt động 100% offline, cam kết không truyền dữ liệu ra ngoài.
+  - **Tùy biến cao:** Cho phép tùy chỉnh độ dài khóa (Bytes hoặc ký tự), tùy chọn bộ ký tự sử dụng, số lượng từ gợi nhớ, ký tự phân cách và lọc bỏ các ký tự dễ nhầm lẫn (1, l, I, 0, O, o).
+  - **Độ mạnh khóa:** Tích hợp bộ đánh giá độ mạnh của khóa (Entropy) trực quan dựa trên độ dài và loại thuật toán được chọn.
+
+---
+
 ## 🚀 Cách sử dụng
 1. Tải toàn bộ mã nguồn về máy hoặc truy cập trực tiếp qua GitHub Pages.
-2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html` hoặc `md-to-epub.html`) để mở trên trình duyệt.
+2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html`, `md-to-epub.html` hoặc `secret-key-gen.html`) để mở trên trình duyệt.
 3. Không cần cài đặt môi trường hay máy chủ bổ sung!
