@@ -51,7 +51,19 @@ _Công cụ sinh mã khóa bảo mật ngẫu nhiên với độ an toàn mã h�
 
 ---
 
-### 4. 🛡️ [Censor Secret](./sensor-secret.html)
+### 4. 📝 [Base64 Editor](./base64-editor.html)
+
+_Công cụ chỉnh sửa nội dung và chuyển đổi qua lại với Base64 theo thời gian thực._
+
+- **Tính năng nổi bật:**
+  - **Chỉnh sửa hai chiều:** Cột trái (nội dung gốc) cho phép edit trực tiếp, cột phải (Base64) chỉ cho phép paste và copy/download.
+  - **Đồng bộ thời gian thực:** Khi edit cột trái, cột phải tự động cập nhật; khi paste vào cột phải, cột trái tự động giải mã.
+  - **Thao tác nhanh:** Nút copy vào clipboard và nút download file từ Base64 output.
+  - **Bảo mật tuyệt đối:** Xử lý 100% trên trình duyệt, không gửi dữ liệu ra ngoài.
+
+---
+
+### 5. 🛡️ [Censor Secret](./sensor-secret.html)
 
 _Công cụ lọc và che giấu các thông tin nhạy cảm trong văn bản trước khi chia sẻ._
 
