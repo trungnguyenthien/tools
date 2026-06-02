@@ -1,0 +1,2076 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSON Response Analyzer - Phân tích Phản hồi JSON</title>
+  <link rel="stylesheet" href="./global.css?v=1.1">
+  <style>
+    :root {
+      --radius-lg: 8px !important;
+      --radius-md: 6px !important;
+    }
+
+    .editor-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .form-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-control {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.38rem 0.5rem;
+      color: var(--text-primary);
+      font-family: var(--font-display);
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 15px -3px var(--glow-blue);
+    }
+
+    textarea.form-control {
+      min-height: 120px;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    select.form-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 1.25rem;
+      padding-right: 2.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+      color: #020617;
+      border: none;
+      padding: 0.4rem 1rem;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.4);
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.3rem 0.62rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-hover);
+    }
+
+    /* Tabs UI */
+    .tab-header {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.25rem;
+      gap: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.3rem 0.62rem;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Request Config Forms */
+    .header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: center;
+    }
+
+    .header-list {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 0.75rem;
+    }
+
+    /* JSON Tree Viewer */
+    .json-tree-container {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.6;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.62rem;
+      overflow: auto;
+      max-height: 600px;
+      position: relative;
+    }
+
+    .json-node {
+      margin-left: 1.5rem;
+      border-left: 1px dashed rgba(255, 255, 255, 0.08);
+      padding-left: 0.75rem;
+    }
+
+    .json-node.root-node {
+      margin-left: 0;
+      border-left: none;
+      padding-left: 0;
+    }
+
+    details {
+      display: block;
+    }
+
+    summary {
+      cursor: pointer;
+      outline: none;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      color: var(--text-primary);
+      user-select: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::before {
+      content: '▶';
+      display: inline-block;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease;
+      width: 12px;
+      text-align: center;
+    }
+
+    details[open] > summary::before {
+      transform: rotate(90deg);
+    }
+
+    .json-key {
+      color: var(--accent-blue);
+      font-weight: 500;
+    }
+
+    .json-string {
+      color: var(--accent-green);
+      word-break: break-all;
+    }
+
+    .json-number {
+      color: var(--accent-purple);
+    }
+
+    .json-boolean {
+      color: var(--accent-warning);
+      font-weight: 600;
+    }
+
+    .json-null {
+      color: var(--accent-danger);
+      font-weight: 600;
+      opacity: 0.8;
+    }
+
+    .json-meta {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      font-family: var(--font-display);
+      margin-left: 0.5rem;
+      opacity: 0.6;
+    }
+
+    .json-comma {
+      color: var(--text-secondary);
+      opacity: 0.5;
+    }
+
+    .json-search-highlight {
+      background: rgba(245, 158, 11, 0.3);
+      border-bottom: 1.5px solid var(--accent-warning);
+      border-radius: 2px;
+      color: #fff !important;
+      padding: 0 2px;
+    }
+
+    /* Response Status Styling */
+    .response-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding: 0.38rem 0.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+    }
+
+    .response-status-badge {
+      font-weight: 700;
+      padding: 0.12rem 0.38rem;
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    .status-2xx {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-4xx, .status-5xx {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .status-other {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--text-secondary);
+    }
+
+    .meta-item strong {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    /* Helper Styles */
+    .helper-bar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
+
+    .helper-btn {
+      background: transparent;
+      border: none;
+      color: var(--accent-blue);
+      font-size: 0.82rem;
+      cursor: pointer;
+      padding: 0.12rem 0.25rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: background 0.2s;
+    }
+
+    .helper-btn:hover {
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .header-table th, .header-table td {
+      padding: 0.25rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-table th {
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    /* Search input inside toolbar */
+    .json-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .search-box-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .search-box-wrap input {
+      width: 100%;
+      padding: 0.22rem 0.5rem 0.22rem 1.8rem;
+      font-size: 0.88rem;
+    }
+
+    .search-box-wrap i {
+      position: absolute;
+      left: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    .alert-banner {
+      background: rgba(56, 189, 248, 0.04);
+      border: 1px solid rgba(56, 189, 248, 0.12);
+      border-radius: var(--radius-md);
+      padding: 0.38rem 0.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+    }
+
+    .alert-banner i {
+      color: var(--accent-blue);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .alert-banner-content strong {
+      color: var(--text-primary);
+    }
+
+    /* Loader */
+    .request-loader {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(56, 189, 248, 0.1);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      padding: 2.5rem 1rem;
+    }
+
+    /* Code DTO syntax highlighting classes */
+    .code-keyword { color: var(--accent-purple); font-weight: 600; }
+    .code-type { color: var(--accent-blue); font-weight: 500; }
+    .code-string { color: var(--accent-green); }
+    .code-comment { color: var(--text-secondary); opacity: 0.7; font-style: italic; }
+    .code-class { color: var(--accent-blue); font-weight: 600; }
+
+    /* History styling */
+    .history-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .history-card:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .history-card-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .history-card-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .history-url {
+      font-size: 0.82rem;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-time {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      opacity: 0.7;
+      margin-top: 0.1rem;
+    }
+
+    .badge-method {
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      line-height: 1;
+    }
+
+    .method-GET { background: rgba(56, 189, 248, 0.1); color: var(--accent-blue); }
+    .method-POST { background: rgba(16, 185, 129, 0.1); color: var(--accent-green); }
+    .method-PUT { background: rgba(245, 158, 11, 0.1); color: var(--accent-warning); }
+    .method-PATCH { background: rgba(129, 140, 248, 0.1); color: var(--accent-purple); }
+    .method-DELETE { background: rgba(239, 68, 68, 0.1); color: var(--accent-danger); }
+
+    /* Fluid full-width page layout overrides */
+    .shell {
+      max-width: 100% !important;
+      width: 100% !important;
+      padding: 0.75rem !important;
+      margin: 0 !important;
+      box-sizing: border-box;
+    }
+
+    .panel {
+      padding: 0.75rem !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    .log-wrap {
+      margin: 0 !important;
+    }
+
+    .main-layout {
+      display: flex !important;
+      gap: 1rem !important;
+      align-items: stretch !important;
+      width: 100% !important;
+      margin-top: 0 !important;
+      padding: 0 !important;
+    }
+
+    .left-col {
+      width: 500px !important;
+      flex-shrink: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 1rem !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      align-self: stretch !important;
+    }
+
+    .right-col {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 1rem !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* History customized for 500px width and full height scrolling */
+    #historyPanel {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      flex: 1 !important;
+      height: 100% !important;
+      min-height: calc(100vh - 120px) !important;
+    }
+
+    #historyList {
+      flex: 1 !important;
+      max-height: none !important;
+      overflow-y: auto !important;
+    }
+
+    .history-card {
+      padding: 0.38rem !important;
+      gap: 0.25rem !important;
+    }
+
+    .history-card-left {
+      gap: 0.38rem !important;
+    }
+
+    .history-url {
+      font-size: 0.82rem !important;
+      white-space: normal !important;
+      word-break: break-all !important;
+      line-height: 1.4 !important;
+    }
+
+    .history-time {
+      font-size: 0.72rem !important;
+      margin-top: 0.12rem !important;
+    }
+
+    /* Left-align and compact header */
+    .header {
+      text-align: left !important;
+      margin-top: 0.25rem !important;
+      margin-bottom: 0.5rem !important;
+      padding: 0 !important;
+    }
+
+    .header h1 {
+      margin: 0 !important;
+      font-size: 1.6rem !important;
+    }
+
+    .back-home {
+      margin-bottom: 0.25rem !important;
+      margin-top: 0 !important;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a href="./index.html" class="back-home">
+      <i class="ti ti-arrow-left" aria-hidden="true"></i> Quay lại trang chủ
+    </a>
+
+    <div class="header" style="margin-bottom: 0.75rem !important;">
+      <h1 style="display: inline-flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        JSON Response Analyzer
+        <span style="font-size: 0.82rem; font-weight: normal; color: var(--text-secondary); opacity: 0.85; display: inline-flex; align-items: center; gap: 0.25rem;">
+          <i class="ti ti-shield-lock" style="color: var(--accent-blue);"></i> Riêng tư 100% Client-side
+        </span>
+      </h1>
+    </div>
+
+    <div class="main-layout">
+      <!-- Cột Trái: Lịch sử Responses (Width fix 500) -->
+      <div class="left-col">
+        <div class="panel" id="historyPanel">
+          <div class="panel-title" style="justify-content: space-between; margin-bottom: 0.75rem;">
+            <span style="font-size: 1rem;"><i class="ti ti-history" aria-hidden="true"></i> Lịch sử Responses</span>
+            <button class="helper-btn" style="font-size: 0.72rem; padding: 0.15rem 0.3rem; color: var(--accent-danger);" onclick="clearRequestHistory()">
+              <i class="ti ti-trash" aria-hidden="true"></i> Xóa
+            </button>
+          </div>
+          
+          <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.3;">
+            Tích chọn nhiều Responses cùng API để gộp DTO.
+          </p>
+
+          <div id="historyList" style="max-height: 600px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; padding-right: 0.25rem;">
+            <!-- History items rendered here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Cột Phải: Make Request & Response Stacked -->
+      <div class="right-col">
+        <!-- Make Request By cURL (Top Panel) -->
+        <div class="panel">
+          <div class="tab-header">
+            <button class="tab-btn active" onclick="switchRequestTab('curl')">
+              <i class="ti ti-terminal" aria-hidden="true"></i> Lệnh cURL
+            </button>
+            <button class="tab-btn" onclick="switchRequestTab('manual')">
+              <i class="ti ti-settings" aria-hidden="true"></i> Cấu hình Chi tiết
+            </button>
+          </div>
+
+          <!-- Tab 1: Nhập cURL -->
+          <div id="tab-curl" class="tab-content active">
+            <div class="form-group" style="margin-bottom: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                <label class="form-label" for="curlInput" style="margin-bottom: 0;">
+                  <i class="ti ti-code" aria-hidden="true"></i> Dán lệnh cURL của bạn
+                </label>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <button class="btn-secondary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="loadSampleCurl()" title="Dùng thử lệnh mẫu">
+                    <i class="ti ti-bulb" aria-hidden="true" style="font-size: 0.9rem;"></i>
+                  </button>
+                  <button class="btn-secondary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="clearCurlInput()" title="Xóa lệnh cURL">
+                    <i class="ti ti-trash" aria-hidden="true" style="font-size: 0.9rem; color: var(--accent-danger);"></i>
+                  </button>
+                  <button class="btn-primary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);" onclick="parseAndRunCurl()" title="Phân tích & Thực thi cURL">
+                    <i class="ti ti-send" aria-hidden="true" style="font-size: 0.9rem;"></i>
+                  </button>
+                </div>
+              </div>
+              <textarea id="curlInput" class="form-control" style="min-height: 80px;" placeholder="curl -X GET 'https://jsonplaceholder.typicode.com/posts/1'"></textarea>
+            </div>
+          </div>
+
+          <!-- Tab 2: Cấu hình Thủ công -->
+          <div id="tab-manual" class="tab-content">
+            <div style="display: grid; grid-template-columns: 80px 1fr auto; gap: 0.5rem; margin-bottom: 1rem; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="reqMethod">Method</label>
+                <select id="reqMethod" class="form-control" style="padding-right: 1.25rem;">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="DELETE">DELETE</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" for="reqUrl">Đường dẫn URL</label>
+                <input type="text" id="reqUrl" class="form-control" placeholder="https://api.example.com/data">
+              </div>
+              <button class="btn-primary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3); margin-bottom: 0;" onclick="executeManualRequest()" title="Gửi Yêu Cầu HTTP">
+                <i class="ti ti-send" aria-hidden="true" style="font-size: 0.9rem;"></i>
+              </button>
+            </div>
+
+            <!-- Headers Section -->
+            <div class="form-group">
+              <label class="form-label">
+                <i class="ti ti-vocabulary" aria-hidden="true"></i> Headers Yêu cầu
+              </label>
+              <div class="header-list" id="headerListContainer">
+                <!-- Header rows will be rendered here dynamically -->
+              </div>
+              <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; align-self: flex-start;" onclick="addNewHeaderRow()">
+                <i class="ti ti-plus" aria-hidden="true"></i> Thêm Header
+              </button>
+            </div>
+
+            <!-- Body Section -->
+            <div class="form-group">
+              <label class="form-label" for="reqBody">
+                <i class="ti ti-braces" aria-hidden="true"></i> Request Body (JSON / Dữ liệu gửi đi)
+              </label>
+              <textarea id="reqBody" class="form-control" placeholder='{"key": "value"}'></textarea>
+            </div>
+
+            <!-- CORS Config inside configuration column -->
+            <div class="form-group">
+              <label class="form-label" for="corsProxySelect">
+                <i class="ti ti-network" aria-hidden="true"></i> Phương thức vượt CORS
+              </label>
+              <select id="corsProxySelect" class="form-control" onchange="toggleCustomProxyInput()">
+                <option value="direct">Trực tiếp (Direct Request - Có thể bị lỗi CORS)</option>
+                <option value="allorigins">Bypass qua AllOrigins CORS Proxy (Miễn phí & An toàn)</option>
+                <option value="custom">Cấu hình Proxy tùy chỉnh</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="customProxyGroup" style="display: none;">
+              <label class="form-label" for="customProxyUrl">Địa chỉ URL Proxy CORS</label>
+              <input type="text" id="customProxyUrl" class="form-control" placeholder="https://cors-anywhere.herokuapp.com/">
+            </div>
+          </div>
+        </div>
+
+        <!-- Bảng Logs Hoạt Động (Log Panel) -->
+        <div class="log-wrap" id="logPanelContainer" style="display: none;">
+          <div class="log-label"><i class="ti ti-report-analytics" aria-hidden="true"></i> Nhật ký hoạt động</div>
+          <div class="log" id="executionLogs">
+            <!-- Execution logs will print here -->
+          </div>
+        </div>
+
+        <!-- Response (Bottom Panel) -->
+        <div class="panel" style="display: flex; flex-direction: column; min-height: 500px;">
+          <div class="panel-title"><i class="ti ti-file-code" aria-hidden="true"></i> Kết Quả Response</div>
+        
+        <!-- Loader Screen -->
+        <div class="request-loader" id="reqLoader">
+          <div class="spinner"></div>
+          <p id="loaderMessage" style="color: var(--text-secondary);">Đang gửi request và đợi kết quả phản hồi...</p>
+        </div>
+
+        <!-- Empty State Screen -->
+        <div class="empty-state" id="reqEmptyState">
+          <div style="font-size: 3rem; color: rgba(255, 255, 255, 0.05); margin-bottom: 1.25rem;">
+            <i class="ti ti-server-cog" aria-hidden="true"></i>
+          </div>
+          <h3 style="margin-bottom: 0.5rem; font-size: 1.15rem; font-weight: 600;">Chưa Có Dữ Liệu</h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); max-width: 320px; margin: 0 auto;">Hãy thực thi một lệnh cURL hoặc gửi request thủ công ở cột bên trái để phân tích kết quả phản hồi.</p>
+        </div>
+
+        <!-- Response Main Output Area -->
+        <div id="responseOutputArea" style="display: none; flex: 1;">
+          
+          <!-- Metadata Bar -->
+          <div class="response-meta-bar">
+            <span class="response-status-badge" id="resStatusBadge">200 OK</span>
+            
+            <div class="meta-item">
+              <i class="ti ti-clock" aria-hidden="true"></i>
+              Thời gian: <strong id="resTimeVal">0 ms</strong>
+            </div>
+
+            <div class="meta-item">
+              <i class="ti ti-database" aria-hidden="true"></i>
+              Kích thước: <strong id="resSizeVal">0 KB</strong>
+            </div>
+          </div>
+
+          <!-- Tabs: Tree View vs Raw View vs Headers vs cURL vs Kotlin DTO -->
+          <div class="tab-header">
+            <button class="tab-btn active" id="btnTabTree" onclick="switchResponseTab('tree')">
+              <i class="ti ti-hierarchy" aria-hidden="true"></i> Cây JSON
+            </button>
+            <button class="tab-btn" id="btnTabRaw" onclick="switchResponseTab('raw')">
+              <i class="ti ti-braces" aria-hidden="true"></i> Raw JSON
+            </button>
+            <button class="tab-btn" id="btnTabHeaders" onclick="switchResponseTab('headers')">
+              <i class="ti ti-table" aria-hidden="true"></i> Headers Phản Hồi
+            </button>
+            <button class="tab-btn" id="btnTabCurl" onclick="switchResponseTab('curl')">
+              <i class="ti ti-terminal" aria-hidden="true"></i> Yêu cầu cURL
+            </button>
+            <button class="tab-btn" id="btnTabDto" onclick="switchResponseTab('dto')">
+              <i class="ti ti-brand-kotlin" aria-hidden="true"></i> Sinh Kotlin DTO
+            </button>
+          </div>
+
+          <!-- Tab Cây JSON -->
+          <div id="resTabTree" class="tab-content active">
+            <div class="json-toolbar">
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="expandAllJsonNodes()">
+                  <i class="ti ti-square-plus" aria-hidden="true"></i> Mở rộng hết
+                </button>
+                <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="collapseAllJsonNodes()">
+                  <i class="ti ti-square-minus" aria-hidden="true"></i> Thu gọn hết
+                </button>
+              </div>
+
+              <div class="search-box-wrap">
+                <i class="ti ti-search" aria-hidden="true"></i>
+                <input type="text" id="jsonSearchInput" class="form-control" placeholder="Tìm kiếm key hoặc value..." oninput="handleJsonSearch()">
+              </div>
+            </div>
+
+            <!-- Cây hiển thị chính -->
+            <div class="json-tree-container" id="jsonTreeRoot"></div>
+          </div>
+
+          <!-- Tab Raw Output -->
+          <div id="resTabRaw" class="tab-content">
+            <div class="json-toolbar" style="justify-content: flex-end;">
+              <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="copyRawJsonToClipboard()">
+                <i class="ti ti-copy" aria-hidden="true"></i> Sao chép JSON
+              </button>
+              <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="downloadJsonFile()">
+                <i class="ti ti-download" aria-hidden="true"></i> Tải về (.json)
+              </button>
+            </div>
+            <pre class="log" id="jsonRawOutput" style="max-height: 500px; white-space: pre-wrap; word-break: break-all; overflow-y: auto;"></pre>
+          </div>
+
+          <!-- Tab Headers -->
+          <div id="resTabHeaders" class="tab-content">
+            <div class="json-tree-container" style="max-height: 500px; padding: 0.5rem;">
+              <table class="header-table">
+                <thead>
+                  <tr>
+                    <th>Tên Header</th>
+                    <th>Giá trị</th>
+                  </tr>
+                </thead>
+                <tbody id="responseHeadersTableBody">
+                  <!-- Header details -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Tab Yêu cầu cURL -->
+          <div id="resTabCurl" class="tab-content">
+            <div class="json-toolbar" style="justify-content: flex-end;">
+              <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="copyCurlToClipboard()">
+                <i class="ti ti-copy" aria-hidden="true"></i> Sao chép cURL
+              </button>
+            </div>
+            <pre class="log" id="jsonCurlOutput" style="max-height: 500px; white-space: pre-wrap; word-break: break-all; overflow-y: auto; color: var(--text-primary) !important;"></pre>
+          </div>
+
+          <!-- Tab Kotlin DTO -->
+          <div id="resTabDto" class="tab-content">
+            <div class="json-toolbar" style="justify-content: space-between; align-items: center; width: 100%; margin-bottom: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                <label class="form-label" for="dtoRootClassName" style="font-size: 0.85rem; margin-bottom: 0;">Tên Class gốc:</label>
+                <input type="text" id="dtoRootClassName" class="form-control" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; width: 150px; height: auto;" value="ResponseDTO" oninput="regenerateDtoClasses()">
+              </div>
+              <div style="display: flex; gap: 0.5rem;">
+                <button class="btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="copyDtoToClipboard()">
+                  <i class="ti ti-copy" aria-hidden="true"></i> Sao chép DTO
+                </button>
+                <button class="btn-secondary" id="btnDownloadDto" style="font-size: 0.8rem; padding: 0.35rem 0.75rem;" onclick="downloadDtoFile()">
+                  <i class="ti ti-download" aria-hidden="true"></i> Tải về (.kt)
+                </button>
+              </div>
+            </div>
+            <div id="dtoMergeStatus" style="font-size: 0.82rem; color: var(--accent-green); margin-bottom: 0.75rem; display: none; align-items: center; gap: 0.35rem;">
+              <i class="ti ti-git-merge" aria-hidden="true"></i> <span>Đang gộp DTO từ 0 response.</span>
+            </div>
+            <pre class="log" id="jsonDtoOutput" style="max-height: 500px; white-space: pre; word-break: keep-all; overflow-x: auto; overflow-y: auto; color: var(--text-primary) !important;"></pre>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variable stores parsed or modified request components
+    let currentResponseData = null;
+    let currentResponseHeaders = {};
+    let requestHeadersList = [];
+
+    // Helper functions for tabs switching
+    function switchRequestTab(tabName) {
+      document.querySelectorAll('#tab-curl, #tab-manual').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-header button').forEach(b => {
+        if (b.getAttribute('onclick').includes(tabName)) {
+          b.classList.add('active');
+        } else if (!b.getAttribute('onclick').includes('switchResponseTab')) {
+          b.classList.remove('active');
+        }
+      });
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+     function switchResponseTab(tabName) {
+      document.querySelectorAll('#resTabTree, #resTabRaw, #resTabHeaders, #resTabCurl, #resTabDto').forEach(t => t.classList.remove('active'));
+      document.getElementById('btnTabTree').classList.remove('active');
+      document.getElementById('btnTabRaw').classList.remove('active');
+      document.getElementById('btnTabHeaders').classList.remove('active');
+      document.getElementById('btnTabCurl').classList.remove('active');
+      document.getElementById('btnTabDto').classList.remove('active');
+      
+      if (tabName === 'tree') document.getElementById('btnTabTree').classList.add('active');
+      if (tabName === 'raw') document.getElementById('btnTabRaw').classList.add('active');
+      if (tabName === 'headers') document.getElementById('btnTabHeaders').classList.add('active');
+      if (tabName === 'curl') document.getElementById('btnTabCurl').classList.add('active');
+      if (tabName === 'dto') {
+        document.getElementById('btnTabDto').classList.add('active');
+        regenerateDtoClasses();
+      }
+
+      document.getElementById(`resTab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`).classList.add('active');
+    }
+
+    function toggleCustomProxyInput() {
+      const selectVal = document.getElementById('corsProxySelect').value;
+      const customGroup = document.getElementById('customProxyGroup');
+      if (selectVal === 'custom') {
+        customGroup.style.display = 'flex';
+      } else {
+        customGroup.style.display = 'none';
+      }
+    }
+
+    // Dynamic headers list management
+    function renderHeadersList() {
+      const container = document.getElementById('headerListContainer');
+      container.innerHTML = '';
+      
+      if (requestHeadersList.length === 0) {
+        container.innerHTML = '<p style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.6; padding: 0.5rem 0;">Chưa cấu hình header nào.</p>';
+        return;
+      }
+
+      requestHeadersList.forEach((header, index) => {
+        const row = document.createElement('div');
+        row.className = 'header-row';
+        row.innerHTML = `
+          <input type="text" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;" placeholder="Content-Type" value="${escapeHtml(header.key)}" oninput="updateHeaderKey(${index}, this.value)">
+          <input type="text" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;" placeholder="application/json" value="${escapeHtml(header.value)}" oninput="updateHeaderValue(${index}, this.value)">
+          <button class="btn-icon" style="padding: 0.4rem;" onclick="removeHeaderRow(${index})" title="Xóa header">
+            <i class="ti ti-trash" aria-hidden="true" style="color: var(--accent-danger);"></i>
+          </button>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function addNewHeaderRow() {
+      requestHeadersList.push({ key: '', value: '' });
+      renderHeadersList();
+    }
+
+    function removeHeaderRow(index) {
+      requestHeadersList.splice(index, 1);
+      renderHeadersList();
+    }
+
+    function updateHeaderKey(index, val) {
+      requestHeadersList[index].key = val;
+    }
+
+    // Direct value assignment inside index-based trigger to handle browser UI properly
+    function updateHeaderValue(index, val) {
+      requestHeadersList[index].value = val;
+    }
+
+    // Example curl loader
+    function loadSampleCurl() {
+      document.getElementById('curlInput').value = `curl -X GET "https://jsonplaceholder.typicode.com/posts/1" \\
+  -H "Accept: application/json" \\
+  -H "X-Custom-Client-Header: antg-v1.1"`;
+    }
+
+    function clearCurlInput() {
+      document.getElementById('curlInput').value = '';
+    }
+
+    // Logging helpers
+    function clearLogs() {
+      document.getElementById('logPanelContainer').style.display = 'block';
+      document.getElementById('executionLogs').innerHTML = '';
+    }
+
+    function logInfo(message) {
+      const logs = document.getElementById('executionLogs');
+      logs.innerHTML += `<div class="inf">[INFO] ${escapeHtml(message)}</div>`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    // Formatted logs helper methods
+    function logOk(message) {
+      const logs = document.getElementById('executionLogs');
+      logs.innerHTML += `<div class="ok">[SUCCESS] ${escapeHtml(message)}</div>`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function logErr(message) {
+      const logs = document.getElementById('executionLogs');
+      logs.innerHTML += `<div class="err">[ERROR] ${escapeHtml(message)}</div>`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function logHeader(message) {
+      const logs = document.getElementById('executionLogs');
+      logs.innerHTML += `<div class="hd">${escapeHtml(message)}</div>`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    // HTML escape helper
+    function escapeHtml(text) {
+      if (typeof text !== 'string') return text;
+      return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // robust bash-compliant curl command parser
+    function parseCurlCommand(curlString) {
+      // Normalize line endings and line continuations
+      let cleanStr = curlString.replace(/\\\s*\n/g, ' ').trim();
+      
+      // Tokenize bash command (supports double/single quote escaping)
+      const tokenRegex = /"([^"\\]*(?:\\.[^"\\]*)*)"|'([^'\\]*(?:\\.[^'\\]*)*)'|([^\s'"]+)/g;
+      const tokens = [];
+      let match;
+      while ((match = tokenRegex.exec(cleanStr)) !== null) {
+        tokens.push(match[1] || match[2] || match[3] || '');
+      }
+      
+      if (tokens.length === 0 || tokens[0].toLowerCase() !== 'curl') {
+        const urlPattern = /https?:\/\/[^\s"']+/i;
+        const urlMatch = curlString.match(urlPattern);
+        if (urlMatch) {
+          return {
+            url: urlMatch[0],
+            method: 'GET',
+            headers: [],
+            body: null
+          };
+        }
+        throw new Error('Đầu vào không đúng định dạng curl hoặc URL.');
+      }
+      
+      let url = '';
+      let method = '';
+      const headers = [];
+      let body = '';
+      
+      for (let i = 1; i < tokens.length; i++) {
+        const token = tokens[i];
+        
+        if (token === '-H' || token === '--header') {
+          const headerVal = tokens[++i];
+          if (headerVal) {
+            const parts = headerVal.split(':');
+            if (parts.length >= 2) {
+              headers.push({
+                key: parts[0].trim(),
+                value: parts.slice(1).join(':').trim()
+              });
+            }
+          }
+        } else if (token === '-X' || token === '--request') {
+          method = tokens[++i];
+        } else if (token === '-d' || token === '--data' || token === '--data-raw' || token === '--data-binary') {
+          body += (body ? '&' : '') + tokens[++i];
+        } else if (token === '-u' || token === '--user') {
+          const credentials = tokens[++i];
+          if (credentials) {
+            headers.push({
+              key: 'Authorization',
+              value: 'Basic ' + btoa(credentials)
+            });
+          }
+        } else if (token.startsWith('http://') || token.startsWith('https://')) {
+          url = token;
+        } else if (!url && !token.startsWith('-')) {
+          url = token;
+        }
+      }
+      
+      if (!method) {
+        method = body ? 'POST' : 'GET';
+      }
+      method = method.toUpperCase();
+      
+      return {
+        url,
+        method,
+        headers,
+        body: body || null
+      };
+    }
+
+    // Trigger parse curl and pre-populate configuration tab
+    function parseAndRunCurl() {
+      const curlStr = document.getElementById('curlInput').value.trim();
+      if (!curlStr) {
+        alert('Vui lòng nhập lệnh cURL!');
+        return;
+      }
+
+      clearLogs();
+      logHeader('🔄 Đang phân tích lệnh cURL...');
+      
+      try {
+        const parsed = parseCurlCommand(curlStr);
+        logOk(`Parse thành công! URL: ${parsed.url}`);
+        logInfo(`Method: ${parsed.method}`);
+        logInfo(`Headers: ${parsed.headers.length} trường`);
+        if (parsed.body) logInfo(`Dữ liệu body: ${parsed.body.length} ký tự`);
+
+        // Populate to GUI fields
+        document.getElementById('reqMethod').value = parsed.method;
+        document.getElementById('reqUrl').value = parsed.url;
+        requestHeadersList = parsed.headers;
+        document.getElementById('reqBody').value = parsed.body || '';
+        renderHeadersList();
+
+        // Automatically switch tabs and execute
+        switchRequestTab('manual');
+        executeManualRequest();
+      } catch (e) {
+        logErr(`Phân tích cURL thất bại: ${e.message}`);
+        alert('Phân tích cURL thất bại! Vui lòng kiểm tra lại cú pháp lệnh.');
+      }
+    }
+
+    // Execute direct fetch from Javascript with CORS configuration
+    async function executeManualRequest() {
+      const method = document.getElementById('reqMethod').value;
+      const url = document.getElementById('reqUrl').value.trim();
+      const body = document.getElementById('reqBody').value;
+      const corsProxy = document.getElementById('corsProxySelect').value;
+      const customProxy = document.getElementById('customProxyUrl').value.trim();
+
+      if (!url) {
+        alert('Vui lòng nhập URL!');
+        return;
+      }
+
+      // Reconstruct and display corresponding cURL command immediately
+      const generatedCurl = reconstructCurl(url, method, requestHeadersList, body);
+      currentCurlRequest = generatedCurl;
+      document.getElementById('jsonCurlOutput').innerHTML = highlightCurlHtml(generatedCurl);
+
+      // Display loader screen
+      document.getElementById('reqEmptyState').style.display = 'none';
+      document.getElementById('responseOutputArea').style.display = 'none';
+      document.getElementById('reqLoader').style.display = 'flex';
+      document.getElementById('loaderMessage').innerText = `Đang gửi HTTP ${method} tới: ${url}...`;
+
+      clearLogs();
+      logHeader(`🌐 Bắt đầu yêu cầu HTTP ${method}`);
+      logInfo(`Target: ${url}`);
+
+      // Compose headers
+      const headersObj = {};
+      requestHeadersList.forEach(h => {
+        if (h.key.trim()) {
+          headersObj[h.key.trim()] = h.value;
+        }
+      });
+
+      // Prepare request payload configuration
+      const fetchConfig = {
+        method: method,
+        headers: headersObj
+      };
+
+      if (method !== 'GET' && method !== 'HEAD' && body.trim()) {
+        fetchConfig.body = body;
+        logInfo(`Đang đính kèm request body (${body.length} byte)`);
+      }
+
+      // Bypass CORS if proxy selected
+      let finalUrl = url;
+      if (corsProxy === 'allorigins') {
+        finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        logInfo(`Kích hoạt AllOrigins Proxy. URL thực tế: ${finalUrl}`);
+      } else if (corsProxy === 'custom') {
+        if (!customProxy) {
+          logErr('Không tìm thấy URL Proxy tùy chỉnh!');
+          alert('Vui lòng cung cấp URL Proxy!');
+          hideLoader();
+          return;
+        }
+        finalUrl = customProxy.endsWith('/') ? customProxy + url : customProxy + '/' + url;
+        logInfo(`Kích hoạt Custom Proxy. URL thực tế: ${finalUrl}`);
+      }
+
+      const startTime = performance.now();
+      try {
+        logInfo('Đang gửi yêu cầu bằng Fetch API...');
+        const response = await fetch(finalUrl, fetchConfig);
+        const endTime = performance.now();
+        const duration = Math.round(endTime - startTime);
+
+        logOk(`Nhận phản hồi! Status Code: ${response.status} ${response.statusText}`);
+        logInfo(`Thời gian thực thi: ${duration} ms`);
+
+        // Record status badge
+        const badge = document.getElementById('resStatusBadge');
+        badge.className = 'response-status-badge';
+        badge.innerText = `${response.status} ${response.statusText}`;
+        if (response.status >= 200 && response.status < 300) {
+          badge.classList.add('status-2xx');
+        } else if (response.status >= 400) {
+          badge.classList.add(response.status >= 500 ? 'status-5xx' : 'status-4xx');
+        } else {
+          badge.classList.add('status-other');
+        }
+
+        // Record Response headers
+        currentResponseHeaders = {};
+        const headersTable = document.getElementById('responseHeadersTableBody');
+        headersTable.innerHTML = '';
+        response.headers.forEach((val, key) => {
+          currentResponseHeaders[key] = val;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight: 600; color: var(--text-primary); font-family: var(--font-mono);">${escapeHtml(key)}</td>
+            <td style="font-family: var(--font-mono); word-break: break-all;">${escapeHtml(val)}</td>
+          `;
+          headersTable.appendChild(tr);
+        });
+        logInfo(`Đã nhận ${Object.keys(currentResponseHeaders).length} Response Headers`);
+
+        // Get payload data
+        const textData = await response.text();
+        const sizeKb = (textData.length / 1024).toFixed(2);
+        
+        document.getElementById('resTimeVal').innerText = `${duration} ms`;
+        document.getElementById('resSizeVal').innerText = `${sizeKb} KB`;
+
+        logInfo(`Kích thước dữ liệu: ${sizeKb} KB`);
+
+        // Parse JSON
+        try {
+          currentResponseData = JSON.parse(textData);
+          logOk('Phân tích cú pháp JSON thành công!');
+          
+          // Render visual JSON Tree Viewer
+          renderJsonTree(currentResponseData);
+          
+          // Render Raw Output
+          document.getElementById('jsonRawOutput').innerHTML = highlightRawJsonHtml(JSON.stringify(currentResponseData, null, 2));
+
+          // Save request response in LocalStorage history list
+          saveToRequestHistory(url, method, response.status, currentResponseData);
+
+          // Reveal output pane
+          document.getElementById('reqLoader').style.display = 'none';
+          document.getElementById('responseOutputArea').style.display = 'block';
+          switchResponseTab('tree');
+        } catch (jsonErr) {
+          logErr('Không phải dữ liệu JSON hợp lệ! Chuyển qua xem Raw text.');
+          
+          currentResponseData = textData;
+          document.getElementById('jsonRawOutput').innerText = textData;
+          document.getElementById('jsonTreeRoot').innerHTML = `<p style="color: var(--accent-danger); font-size: 0.95rem; font-family: var(--font-display);">Lỗi phân tích JSON: Phản hồi trả về không phải là JSON hoặc không đúng cú pháp. Vui lòng chuyển qua tab "Raw JSON" để xem nội dung văn bản thô.</p>`;
+          
+          document.getElementById('reqLoader').style.display = 'none';
+          document.getElementById('responseOutputArea').style.display = 'block';
+          switchResponseTab('raw');
+        }
+
+      } catch (reqErr) {
+        logErr(`Kết nối thất bại: ${reqErr.message}`);
+        console.error(reqErr);
+        
+        document.getElementById('reqLoader').style.display = 'none';
+        document.getElementById('reqEmptyState').style.display = 'flex';
+        
+        alert(`Kết nối API thất bại!\n\nLỗi: ${reqErr.message}\n\nGợi ý: Hãy thử chọn phương thức vượt CORS "AllOrigins CORS Proxy" ở tab cấu hình chi tiết.`);
+      }
+    }
+
+    function hideLoader() {
+      document.getElementById('reqLoader').style.display = 'none';
+      document.getElementById('reqEmptyState').style.display = 'flex';
+    }
+
+    // High performance syntax highlighter for raw JSON pane
+    function highlightRawJsonHtml(jsonStr) {
+      if (!jsonStr) return '';
+      return jsonStr
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g, function (match) {
+          let cls = 'json-number';
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+              cls = 'json-key';
+            } else {
+              cls = 'json-string';
+            }
+          } else if (/true|false/.test(match)) {
+            cls = 'json-boolean';
+          } else if (/null/.test(match)) {
+            cls = 'json-null';
+          }
+          return `<span class="${cls}">${match}</span>`;
+        });
+    }
+
+    // Dynamic JSON tree view builder (recursive)
+    function buildJsonTreeNode(key, val, isLast) {
+      const type = typeof val;
+      const comma = isLast ? '' : '<span class="json-comma">,</span>';
+      
+      // Node wrapper
+      const node = document.createElement('div');
+      node.className = 'json-node';
+
+      // 1. Array or Object (Complex node - expandable)
+      if (val !== null && type === 'object') {
+        const isArray = Array.isArray(val);
+        const childCount = isArray ? val.length : Object.keys(val).length;
+        const startBracket = isArray ? '[' : '{';
+        const endBracket = isArray ? ']' : '}';
+        const metaText = isArray ? `[Array(${childCount})]` : `{Object(${childCount})}`;
+        
+        const details = document.createElement('details');
+        details.open = true; // Open by default
+
+        const summary = document.createElement('summary');
+        
+        const keySpan = key !== null ? `<span class="json-key">"${escapeHtml(key)}"</span><span class="json-comma">: </span>` : '';
+        summary.innerHTML = `${keySpan}<span class="json-bracket">${startBracket}</span><span class="json-meta">${metaText}</span>`;
+        details.appendChild(summary);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.style.marginLeft = '1rem';
+
+        if (isArray) {
+          val.forEach((item, index) => {
+            contentDiv.appendChild(buildJsonTreeNode(null, item, index === val.length - 1));
+          });
+        } else {
+          const keys = Object.keys(val);
+          keys.forEach((k, index) => {
+            contentDiv.appendChild(buildJsonTreeNode(k, val[k], index === keys.length - 1));
+          });
+        }
+
+        details.appendChild(contentDiv);
+
+        const closingLine = document.createElement('div');
+        closingLine.className = 'json-bracket-close';
+        closingLine.innerHTML = `<span class="json-bracket">${endBracket}</span>${comma}`;
+        details.appendChild(closingLine);
+
+        node.appendChild(details);
+      } 
+      // 2. Leaf/Primitive Nodes (Strings, Numbers, Booleans, Nulls)
+      else {
+        const keySpan = key !== null ? `<span class="json-key">"${escapeHtml(key)}"</span><span class="json-comma">: </span>` : '';
+        let valSpan = '';
+
+        if (val === null) {
+          valSpan = '<span class="json-null">null</span>';
+        } else if (type === 'string') {
+          valSpan = `<span class="json-string">"${escapeHtml(val)}"</span>`;
+        } else if (type === 'number') {
+          valSpan = `<span class="json-number">${val}</span>`;
+        } else if (type === 'boolean') {
+          valSpan = `<span class="json-boolean">${val}</span>`;
+        }
+
+        node.innerHTML = `${keySpan}${valSpan}${comma}`;
+      }
+
+      return node;
+    }
+
+    function renderJsonTree(data) {
+      const treeRoot = document.getElementById('jsonTreeRoot');
+      treeRoot.innerHTML = '';
+      
+      const node = buildJsonTreeNode(null, data, true);
+      node.classList.add('root-node');
+      treeRoot.appendChild(node);
+    }
+
+    // Expand / Collapse all
+    function expandAllJsonNodes() {
+      document.querySelectorAll('#jsonTreeRoot details').forEach(d => d.open = true);
+    }
+
+    function collapseAllJsonNodes() {
+      // Don't collapse the absolute root node details, collapse child ones
+      document.querySelectorAll('#jsonTreeRoot .json-node .json-node details').forEach(d => d.open = false);
+    }
+
+    // Realtime search inside JSON tree viewer
+    function handleJsonSearch() {
+      const q = document.getElementById('jsonSearchInput').value.trim().toLowerCase();
+      
+      // Clear previous highlight
+      document.querySelectorAll('#jsonTreeRoot .json-search-highlight').forEach(el => {
+        el.outerHTML = el.innerText;
+      });
+
+      if (!q) return;
+
+      // Search matching DOM texts inside strings, keys, numbers
+      const targets = document.querySelectorAll('#jsonTreeRoot .json-key, #jsonTreeRoot .json-string, #jsonTreeRoot .json-number, #jsonTreeRoot .json-boolean');
+      
+      let matchCount = 0;
+      targets.forEach(target => {
+        const text = target.textContent;
+        const idx = text.toLowerCase().indexOf(q);
+        if (idx !== -1) {
+          // Highlight match
+          const original = target.innerHTML;
+          const escapedQ = escapeHtml(text.substr(idx, q.length));
+          const regex = new RegExp(`(${escapeRegExp(escapedQ)})`, 'gi');
+          target.innerHTML = original.replace(regex, '<span class="json-search-highlight">$1</span>');
+          
+          // Automatically open all ancestor <details> parent tags to reveal the highlighted matches
+          let parent = target.parentElement;
+          while (parent && parent !== document.getElementById('jsonTreeRoot')) {
+            if (parent.tagName === 'DETAILS') {
+              parent.open = true;
+            }
+            parent = parent.parentElement;
+          }
+          matchCount++;
+        }
+      });
+    }
+
+    function escapeRegExp(string) {
+      return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    let currentCurlRequest = '';
+
+    function highlightCurlHtml(curlStr) {
+      if (!curlStr) return '';
+      let html = escapeHtml(curlStr);
+      
+      const placeholders = [];
+
+      // 1. Double quoted strings (escaped as &quot;...&quot;)
+      html = html.replace(/(&quot;.*?&quot;)/g, (match) => {
+        const id = `___STR_PLACEHOLDER_${placeholders.length}___`;
+        placeholders.push({ id, html: `<span class="code-string">${match}</span>` });
+        return id;
+      });
+
+      // 2. Single quoted strings (escaped as &#039;...&#039;)
+      html = html.replace(/(&#039;.*?&#039;)/g, (match) => {
+        const id = `___STR_PLACEHOLDER_${placeholders.length}___`;
+        placeholders.push({ id, html: `<span class="code-string">${match}</span>` });
+        return id;
+      });
+
+      // 3. Highlight curl keyword
+      html = html.replace(/\b(curl)\b/g, '<span class="code-keyword">$1</span>');
+
+      // 4. Highlight flags
+      html = html.replace(/(\s-[XHdu]|\s--header|\s--request|\s--data|\s--data-raw|\s--data-binary|\s--user)/g, '<span class="code-type">$1</span>');
+
+      // 5. Restore placeholders
+      for (let i = placeholders.length - 1; i >= 0; i--) {
+        const placeholder = placeholders[i];
+        html = html.replace(placeholder.id, placeholder.html);
+      }
+      
+      return html;
+    }
+
+    function copyCurlToClipboard() {
+      if (!currentCurlRequest) return;
+      navigator.clipboard.writeText(currentCurlRequest).then(() => {
+        const btn = document.getElementById('btnTabCurl');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Đã sao chép';
+        setTimeout(() => { btn.innerHTML = orig; }, 1500);
+      });
+    }
+
+    // File utilities
+    function copyRawJsonToClipboard() {
+      if (!currentResponseData) return;
+      const jsonStr = JSON.stringify(currentResponseData, null, 2);
+      
+      navigator.clipboard.writeText(jsonStr).then(() => {
+        const btn = document.getElementById('btnTabRaw');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Đã sao chép';
+        setTimeout(() => { btn.innerHTML = orig; }, 1500);
+      });
+    }
+
+    function downloadJsonFile() {
+      if (!currentResponseData) return;
+      const blob = new Blob([JSON.stringify(currentResponseData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'api-response.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- Kotlin DTO Generator Logic ---
+    function generateKotlinClasses(obj, rootName = 'ResponseDTO') {
+      if (!obj || typeof obj !== 'object') {
+        return `// Lỗi: Phản hồi không phải là Object hoặc Array JSON hợp lệ để sinh Kotlin class.`;
+      }
+      
+      const classes = [];
+      const processedObjects = new Set();
+
+      function capitalize(str) {
+        if (!str) return '';
+        return str.charAt(0).toUpperCase() + str.slice(1);
+      }
+
+      function getKotlinType(key, val) {
+        if (val === null) return 'Any?';
+        const type = typeof val;
+        if (type === 'string') return 'String';
+        if (type === 'number') {
+          return Number.isInteger(val) ? 'Int' : 'Double';
+        }
+        if (type === 'boolean') return 'Boolean';
+        if (Array.isArray(val)) {
+          if (val.length > 0) {
+            const item = val[0];
+            if (typeof item === 'object' && item !== null) {
+              const childClassName = capitalize(key) + 'DTO';
+              if (!processedObjects.has(childClassName)) {
+                processedObjects.add(childClassName);
+                generateSingleKotlinClass(childClassName, item);
+              }
+              return `List<${childClassName}>`;
+            } else {
+              return `List<${getKotlinType(key, item)}>`;
+            }
+          }
+          return 'List<Any>';
+        }
+        if (type === 'object') {
+          const childClassName = capitalize(key) + 'DTO';
+          if (!processedObjects.has(childClassName)) {
+            processedObjects.add(childClassName);
+            generateSingleKotlinClass(childClassName, val);
+          }
+          return childClassName;
+        }
+        return 'Any';
+      }
+
+      function generateSingleKotlinClass(className, data) {
+        if (data === null || typeof data !== 'object') {
+          return;
+        }
+
+        const isArr = Array.isArray(data);
+        const sampleObj = isArr ? (data[0] || {}) : data;
+        const keys = Object.keys(sampleObj);
+
+        let classCode = `data class ${className}(\n`;
+        const fields = [];
+        
+        keys.forEach(key => {
+          const val = sampleObj[key];
+          const kType = getKotlinType(key, val);
+          
+          let defaultVal = '';
+          if (kType === 'String') defaultVal = ' = ""';
+          else if (kType === 'Int') defaultVal = ' = 0';
+          else if (kType === 'Double') defaultVal = ' = 0.0';
+          else if (kType === 'Boolean') defaultVal = ' = false';
+          else if (kType.startsWith('List<')) defaultVal = ' = emptyList()';
+          else defaultVal = ' = null';
+          
+          let finalType = kType;
+          if (defaultVal === ' = null' && !kType.endsWith('?')) {
+            finalType = kType + '?';
+          }
+
+          fields.push(`    val ${key}: ${finalType}${defaultVal}`);
+        });
+
+        classCode += fields.join(',\n');
+        classCode += `\n)`;
+        
+        classes.unshift(classCode);
+      }
+
+      const cleanRootName = rootName.replace(/[^a-zA-Z0-9_$]/g, '') || 'ResponseDTO';
+      
+      if (Array.isArray(obj)) {
+        if (obj.length > 0 && typeof obj[0] === 'object' && obj[0] !== null) {
+          generateSingleKotlinClass(cleanRootName, obj[0]);
+        } else {
+          return `// Response là mảng dữ liệu nguyên thủy (Primitive Array).\n// Không cần tạo Kotlin Data Class.`;
+        }
+      } else {
+        generateSingleKotlinClass(cleanRootName, obj);
+      }
+
+      return classes.join('\n\n');
+    }
+
+    function highlightCodeHtml(codeText) {
+      if (!codeText) return '';
+      let html = escapeHtml(codeText);
+      
+      const placeholders = [];
+
+      // 1. Strings (lazy matching to prevent line bridging)
+      html = html.replace(/(&quot;.*?&quot;)/g, (match) => {
+        const id = `___STR_PLACEHOLDER_${placeholders.length}___`;
+        placeholders.push({ id, html: `<span class="code-string">${match}</span>` });
+        return id;
+      });
+
+      // 2. Comments
+      html = html.replace(/(\/\/.*)/g, (match) => {
+        const id = `___COM_PLACEHOLDER_${placeholders.length}___`;
+        placeholders.push({ id, html: `<span class="code-comment">${match}</span>` });
+        return id;
+      });
+
+      // 3. Keywords
+      const keywords = ['data', 'class', 'val', 'var', 'null'];
+      const keywordRegex = new RegExp(`\\b(${keywords.join('|')})\\b`, 'g');
+      html = html.replace(keywordRegex, '<span class="code-keyword">$1</span>');
+
+      // 4. Standard types
+      const types = ['String', 'Int', 'Double', 'Boolean', 'List', 'Any'];
+      const typeRegex = new RegExp(`\\b(${types.join('|')})\\b`, 'g');
+      html = html.replace(typeRegex, '<span class="code-type">$1</span>');
+
+      // 5. standard emptyList call
+      html = html.replace(/\b(emptyList)\b/g, '<span class="code-keyword">$1</span>');
+
+      // Restore placeholders
+      for (let i = placeholders.length - 1; i >= 0; i--) {
+        const placeholder = placeholders[i];
+        html = html.replace(placeholder.id, placeholder.html);
+      }
+      
+      return html;
+    }
+
+    function updateResponseViews(targetData) {
+      if (!targetData) return;
+      try {
+        renderJsonTree(targetData);
+      } catch (e) {
+        console.error(e);
+      }
+      try {
+        document.getElementById('jsonRawOutput').innerHTML = highlightRawJsonHtml(JSON.stringify(targetData, null, 2));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function regenerateDtoClasses() {
+      const outputArea = document.getElementById('jsonDtoOutput');
+      const mergeStatus = document.getElementById('dtoMergeStatus');
+      
+      const selectedResponses = getSelectedHistoryResponses();
+      let targetData = currentResponseData;
+      
+      if (selectedResponses.length > 0) {
+        targetData = deepMergeJSON(selectedResponses);
+        mergeStatus.style.display = 'flex';
+        mergeStatus.querySelector('span').innerText = `Đang gộp DTO từ ${selectedResponses.length} response đã chọn trong lịch sử.`;
+        
+        // Tự động hiển thị khung kết quả và ẩn Empty State khi chọn lịch sử
+        document.getElementById('reqEmptyState').style.display = 'none';
+        document.getElementById('responseOutputArea').style.display = 'block';
+        
+        // Đồng bộ hóa tab Cây JSON và Raw JSON với dữ liệu đã gộp
+        updateResponseViews(targetData);
+      } else {
+        mergeStatus.style.display = 'none';
+        
+        if (currentResponseData) {
+          document.getElementById('reqEmptyState').style.display = 'none';
+          document.getElementById('responseOutputArea').style.display = 'block';
+          updateResponseViews(currentResponseData);
+        } else {
+          document.getElementById('reqEmptyState').style.display = 'flex';
+          document.getElementById('responseOutputArea').style.display = 'none';
+        }
+      }
+
+      if (!targetData) {
+        outputArea.innerHTML = `<span class="code-comment">// Hãy gửi request thành công hoặc tích chọn response lịch sử trước khi sinh DTO.</span>`;
+        return;
+      }
+      
+      const rootClassName = document.getElementById('dtoRootClassName').value.trim() || 'ResponseDTO';
+      try {
+        const code = generateKotlinClasses(targetData, rootClassName);
+        outputArea.innerHTML = highlightCodeHtml(code);
+      } catch (err) {
+        outputArea.innerHTML = `<span class="code-comment">// Lỗi sinh DTO: ${escapeHtml(err.message)}</span>`;
+      }
+    }
+
+    function copyDtoToClipboard() {
+      const dtoText = document.getElementById('jsonDtoOutput').innerText;
+      if (!dtoText || dtoText.startsWith('//')) return;
+      
+      navigator.clipboard.writeText(dtoText).then(() => {
+        const btn = document.getElementById('btnTabDto');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="ti ti-check" aria-hidden="true"></i> Đã sao chép';
+        setTimeout(() => { btn.innerHTML = orig; }, 1500);
+      });
+    }
+
+    function downloadDtoFile() {
+      const dtoText = document.getElementById('jsonDtoOutput').innerText;
+      if (!dtoText || dtoText.startsWith('//')) return;
+
+      const rootClassName = document.getElementById('dtoRootClassName').value.trim() || 'ResponseDTO';
+      const blob = new Blob([dtoText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${rootClassName.toLowerCase()}.kt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // --- Request History and Deep Merging System ---
+    let requestHistory = [];
+
+    function reconstructCurl(url, method, headers, body) {
+      let cmd = `curl -X ${method} "${url}"`;
+      if (headers) {
+        headers.forEach(h => {
+          if (h.key.trim()) {
+            cmd += ` \\\n  -H "${h.key.trim()}: ${h.value}"`;
+          }
+        });
+      }
+      if (body && method !== 'GET' && method !== 'HEAD') {
+        const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, ' ');
+        cmd += ` \\\n  -d "${escapedBody}"`;
+      }
+      return cmd;
+    }
+
+    function saveToRequestHistory(url, method, status, responseJson) {
+      try {
+        const bodyVal = document.getElementById('reqBody').value;
+        const curlCmd = reconstructCurl(url, method, requestHeadersList, bodyVal);
+        
+        const item = {
+          id: Date.now() + Math.random().toString(36).substr(2, 5),
+          url: url,
+          method: method,
+          status: status,
+          timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+          response: responseJson,
+          curl: curlCmd,
+          headers: JSON.parse(JSON.stringify(requestHeadersList)),
+          body: bodyVal
+        };
+        
+        requestHistory.unshift(item);
+        if (requestHistory.length > 15) {
+          requestHistory.pop(); // limit to 15 items
+        }
+        
+        localStorage.setItem('antg_api_request_history', JSON.stringify(requestHistory));
+        renderRequestHistory();
+      } catch (err) {
+        console.error('Error saving history:', err);
+      }
+    }
+
+    function loadRequestHistory() {
+      try {
+        const saved = localStorage.getItem('antg_api_request_history');
+        if (saved) {
+          requestHistory = JSON.parse(saved);
+        } else {
+          requestHistory = [];
+        }
+        renderRequestHistory();
+      } catch (err) {
+        console.error('Error loading history:', err);
+        requestHistory = [];
+      }
+    }
+
+    function restoreRequestFromHistory(id) {
+      const item = requestHistory.find(h => h.id === id);
+      if (item) {
+        // Restore request fields
+        document.getElementById('curlInput').value = item.curl || '';
+        document.getElementById('reqUrl').value = item.url || '';
+        document.getElementById('reqMethod').value = item.method || 'GET';
+        document.getElementById('reqBody').value = item.body || '';
+        requestHeadersList = item.headers ? JSON.parse(JSON.stringify(item.headers)) : [];
+        renderHeadersList();
+        
+        // Log feedback
+        clearLogs();
+        logHeader('🔄 Đã khôi phục cấu hình Request từ Lịch sử!');
+        logInfo(`Method: ${item.method}`);
+        logInfo(`URL: ${item.url}`);
+        
+        // Populate and render that historical response
+        currentResponseData = item.response;
+        updateResponseViews(currentResponseData);
+        
+        // Show corresponding cURL Request
+        currentCurlRequest = item.curl || '';
+        document.getElementById('jsonCurlOutput').innerHTML = highlightCurlHtml(currentCurlRequest);
+        
+        const badge = document.getElementById('resStatusBadge');
+        badge.className = 'response-status-badge';
+        badge.innerText = `${item.status}`;
+        if (item.status >= 200 && item.status < 300) {
+          badge.classList.add('status-2xx');
+        } else if (item.status >= 400) {
+          badge.classList.add(item.status >= 500 ? 'status-5xx' : 'status-4xx');
+        } else {
+          badge.classList.add('status-other');
+        }
+        
+        document.getElementById('reqEmptyState').style.display = 'none';
+        document.getElementById('responseOutputArea').style.display = 'block';
+        
+        // Re-generate DTO
+        regenerateDtoClasses();
+      }
+    }
+
+    function clearRequestHistory() {
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử response không?')) {
+        requestHistory = [];
+        localStorage.removeItem('antg_api_request_history');
+        renderRequestHistory();
+        regenerateDtoClasses();
+      }
+    }
+
+    function removeHistoryItem(id, event) {
+      if (event) event.stopPropagation();
+      requestHistory = requestHistory.filter(item => item.id !== id);
+      localStorage.setItem('antg_api_request_history', JSON.stringify(requestHistory));
+      renderRequestHistory();
+      regenerateDtoClasses();
+    }
+
+    function handleHistoryCheckboxChange() {
+      const selectedCheckboxes = document.querySelectorAll('#historyList input[type="checkbox"]:checked');
+      
+      if (selectedCheckboxes.length === 0) {
+        // Enable all checkboxes if none selected
+        document.querySelectorAll('#historyList input[type="checkbox"]').forEach(cb => {
+          cb.disabled = false;
+          cb.parentElement.parentElement.style.opacity = '1';
+        });
+      } else {
+        // Find the first selected endpoint details
+        const firstSelectedId = selectedCheckboxes[0].value;
+        const firstItem = requestHistory.find(h => h.id === firstSelectedId);
+        
+        if (firstItem) {
+          const targetUrl = firstItem.url;
+          const targetMethod = firstItem.method;
+          
+          // Disable and dim checkboxes of other API endpoints
+          document.querySelectorAll('#historyList input[type="checkbox"]').forEach(cb => {
+            const item = requestHistory.find(h => h.id === cb.value);
+            if (item) {
+              const isMatch = item.url === targetUrl && item.method === targetMethod;
+              if (!isMatch) {
+                cb.disabled = true;
+                cb.parentElement.parentElement.style.opacity = '0.35'; // Dim card
+              } else {
+                cb.disabled = false;
+                cb.parentElement.parentElement.style.opacity = '1';
+              }
+            }
+          });
+        }
+      }
+      
+      // Regenerate DTO classes based on selected responses
+      regenerateDtoClasses();
+    }
+
+    function renderRequestHistory() {
+      const historyList = document.getElementById('historyList');
+      
+      if (requestHistory.length === 0) {
+        historyList.innerHTML = '<p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; opacity: 0.5; padding: 1.5rem 0;">Trống</p>';
+        return;
+      }
+      
+      historyList.innerHTML = '';
+      
+      requestHistory.forEach(item => {
+        const urlObj = new URL(item.url);
+        const displayUrl = urlObj.pathname + urlObj.search;
+        const hostName = urlObj.hostname;
+        
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.style.cursor = 'pointer';
+        card.setAttribute('onclick', `restoreRequestFromHistory('${item.id}')`);
+        card.innerHTML = `
+          <div class="history-card-left">
+            <input type="checkbox" class="checkbox-input" style="width: 1rem; height: 1rem; cursor: pointer;" value="${item.id}" onchange="handleHistoryCheckboxChange()" onclick="event.stopPropagation()">
+            <div class="history-card-meta">
+              <div class="history-url" title="${escapeHtml(item.url)}">
+                <span class="badge-method method-${item.method}">${item.method}</span>
+                <span style="opacity: 0.6; font-size: 0.78rem;">${escapeHtml(hostName)}</span>${escapeHtml(displayUrl)}
+              </div>
+              <div class="history-time">
+                <span class="status-badge st-done" style="font-size: 0.65rem; padding: 0.1rem 0.4rem;">${item.status}</span> • ${item.timestamp}
+              </div>
+            </div>
+          </div>
+          <button class="btn-icon" style="padding: 0.25rem;" onclick="removeHistoryItem('${item.id}', event)" title="Xóa">
+            <i class="ti ti-x" aria-hidden="true" style="color: var(--accent-danger); font-size: 0.9rem;"></i>
+          </button>
+        `;
+        historyList.appendChild(card);
+      });
+    }
+
+    function getSelectedHistoryResponses() {
+      const selectedCheckboxes = document.querySelectorAll('#historyList input[type="checkbox"]:checked');
+      const selectedObjects = [];
+      
+      selectedCheckboxes.forEach(cb => {
+        const item = requestHistory.find(h => h.id === cb.value);
+        if (item && item.response) {
+          selectedObjects.push(item.response);
+        }
+      });
+      
+      return selectedObjects;
+    }
+
+    // deep merge function
+    function deepMergeJSON(objects) {
+      if (objects.length === 0) return null;
+      if (objects.length === 1) return objects[0];
+      
+      const base = objects[0];
+      const firstType = typeof base;
+      const allSameType = objects.every(obj => typeof obj === firstType && Array.isArray(obj) === Array.isArray(base));
+      
+      if (!allSameType) {
+        return base;
+      }
+      
+      if (base === null) {
+        const nonNull = objects.find(obj => obj !== null);
+        return nonNull !== undefined ? nonNull : null;
+      }
+      
+      if (Array.isArray(base)) {
+        const allElements = [];
+        objects.forEach(arr => {
+          if (Array.isArray(arr)) {
+            allElements.push(...arr);
+          }
+        });
+        
+        if (allElements.length === 0) return [];
+        
+        const firstElem = allElements[0];
+        if (firstElem !== null && typeof firstElem === 'object') {
+          return [deepMergeJSON(allElements)];
+        } else {
+          return [...new Set(allElements)];
+        }
+      }
+      
+      if (firstType === 'object') {
+        const merged = {};
+        const allKeys = new Set();
+        objects.forEach(obj => {
+          if (obj && typeof obj === 'object') {
+            Object.keys(obj).forEach(k => allKeys.add(k));
+          }
+        });
+        
+        allKeys.forEach(key => {
+          const valuesForKey = [];
+          objects.forEach(obj => {
+            if (obj && typeof obj === 'object' && obj[key] !== undefined) {
+              valuesForKey.push(obj[key]);
+            }
+          });
+          merged[key] = deepMergeJSON(valuesForKey);
+        });
+        
+        return merged;
+      }
+      
+      return base;
+    }
+
+    // Initialize list template onload
+    window.addEventListener('DOMContentLoaded', () => {
+      addNewHeaderRow();
+      loadRequestHistory();
+    });
+  </script>
+</body>
+</html>

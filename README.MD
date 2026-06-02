@@ -77,8 +77,22 @@ _Công cụ lọc và che giấu các thông tin nhạy cảm trong văn bản t
 
 ---
 
+### 6. 🌐 [JSON Response Analyzer](./json-response-analyze.html)
+
+_Công cụ phân tích và trực quan hóa phản hồi JSON từ lệnh cURL hoặc HTTP request._
+
+- **Tính năng nổi bật:**
+  - **Phân tích lệnh cURL thông minh:** Tự động phân tích cú pháp các lệnh cURL dạng chuỗi thành URL, HTTP Method, Headers và Body để sẵn sàng thực thi.
+  - **Trình cấu hình trực quan:** Cho phép tùy chỉnh thủ công đầy đủ các tham số HTTP: Method (GET, POST, PUT, DELETE, PATCH), URL, thêm/sửa/xóa các Header tùy biến và đính kèm Request Body.
+  - **Vượt rào cản CORS linh hoạt:** Cung cấp giải pháp gửi request trực tiếp hoặc bypass qua cổng CORS Proxy AllOrigins/Custom giúp xử lý trơn tru các hạn chế chính sách CORS của trình duyệt.
+  - **Trực quan hóa dạng cây JSON sinh động:** Render dữ liệu JSON phản hồi thành cấu trúc cây phân cấp (collapsible tree view) dễ dàng thu gọn, mở rộng, tìm kiếm từ khóa real-time và tô màu cú pháp (syntax highlighting).
+  - **Tự động sinh mã Kotlin Data Class:** Tự động phân tích cấu trúc JSON phản hồi để sinh mã Kotlin Data Class hoàn chỉnh với đầy đủ kiểu dữ liệu tường minh (`String`, `Int`, `Double`, `Boolean`, `List<T>`), gán sẵn giá trị mặc định tránh lỗi crash và hỗ trợ đệ quy cho các đối tượng lồng nhau một cách tối ưu.
+  - **Xuất dữ liệu nhanh chóng:** Xem mã JSON gốc (Raw), sao chép vào clipboard hoặc tải về dưới dạng tệp tin `.json` chỉ với một click.
+
+---
+
 ## 🚀 Cách sử dụng
 
 1. Tải toàn bộ mã nguồn về máy hoặc truy cập trực tiếp qua GitHub Pages.
-2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html`, `md-to-epub.html`, `secret-key-gen.html` hoặc `sensor-secret.html`) để mở trên trình duyệt.
+2. Click đúp chuột vào bất kỳ file `.html` nào (`base64-encoder.html`, `md-to-epub.html`, `secret-key-gen.html`, `sensor-secret.html` hoặc `json-response-analyze.html`) để mở trên trình duyệt.
 3. Không cần cài đặt môi trường hay máy chủ bổ sung!
