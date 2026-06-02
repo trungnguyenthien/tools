@@ -1807,10 +1807,34 @@
       return cmd;
     }
 
+    function maskSensitiveHeaders(headers) {
+      if (!headers) return [];
+      const sensitiveKeys = [
+        'authorization', 'api-key', 'api_key', 'apikey', 'token', 'access-token',
+        'x-api-key', 'x-api-token', 'cookie', 'set-cookie', 'secret', 'password',
+        'proxy-authorization', 'x-auth-token', 'x-csrf-token'
+      ];
+      return headers.map(h => {
+        const keyLower = h.key.trim().toLowerCase();
+        const isSensitive = sensitiveKeys.some(sk => keyLower.includes(sk));
+        if (isSensitive && h.value) {
+          return {
+            key: h.key,
+            value: '●●●●●● [REDACTED]'
+          };
+        }
+        return {
+          key: h.key,
+          value: h.value
+        };
+      });
+    }
+
     function saveToRequestHistory(url, method, status, responseJson) {
       try {
         const bodyVal = document.getElementById('reqBody').value;
-        const curlCmd = reconstructCurl(url, method, requestHeadersList, bodyVal);
+        const maskedHeaders = maskSensitiveHeaders(requestHeadersList);
+        const curlCmd = reconstructCurl(url, method, maskedHeaders, bodyVal);
         
         const item = {
           id: Date.now() + Math.random().toString(36).substr(2, 5),
@@ -1820,7 +1844,7 @@
           timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
           response: responseJson,
           curl: curlCmd,
-          headers: JSON.parse(JSON.stringify(requestHeadersList)),
+          headers: maskedHeaders,
           body: bodyVal
         };
         
