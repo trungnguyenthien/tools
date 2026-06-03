@@ -572,6 +572,31 @@
       padding: 0 !important;
     }
 
+    .panel-title {
+      font-size: 1.15rem !important;
+      font-weight: 700 !important;
+      margin-bottom: 1rem !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .panel-title > span {
+      background: linear-gradient(135deg, #ffe066 0%, #f5a623 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 0.5rem !important;
+    }
+
+    .panel-title > span i {
+      background: linear-gradient(135deg, #ffe066 0%, #f5a623 100%) !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
     /* History customized for 500px width and full height scrolling */
     #historyPanel {
       margin-top: 0 !important;
@@ -650,7 +675,7 @@
       <div class="left-col">
         <div class="panel" id="historyPanel">
           <div class="panel-title" style="justify-content: space-between; margin-bottom: 0.75rem;">
-            <span style="font-size: 1rem;"><i class="ti ti-history" aria-hidden="true"></i> Lịch sử Responses</span>
+            <span><i class="ti ti-history" aria-hidden="true"></i> Lịch sử Responses</span>
             <button class="helper-btn" style="font-size: 0.72rem; padding: 0.15rem 0.3rem; color: var(--accent-danger);" onclick="clearRequestHistory()">
               <i class="ti ti-trash" aria-hidden="true"></i> Xóa
             </button>
@@ -683,20 +708,21 @@
           <div id="tab-curl" class="tab-content active">
             <div class="form-group" style="margin-bottom: 0.5rem;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label class="form-label" for="curlInput" style="margin-bottom: 0;">
-                  <i class="ti ti-code" aria-hidden="true"></i> Dán lệnh cURL của bạn
-                </label>
-                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <label class="form-label" for="curlInput" style="margin-bottom: 0;">
+                    <i class="ti ti-code" aria-hidden="true"></i> Dán lệnh cURL của bạn
+                  </label>
                   <button class="btn-secondary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="loadSampleCurl()" title="Dùng thử lệnh mẫu">
                     <i class="ti ti-bulb" aria-hidden="true" style="font-size: 0.9rem;"></i>
                   </button>
                   <button class="btn-secondary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center;" onclick="clearCurlInput()" title="Xóa lệnh cURL">
                     <i class="ti ti-trash" aria-hidden="true" style="font-size: 0.9rem; color: var(--accent-danger);"></i>
                   </button>
-                  <button class="btn-primary" style="width: 28px; height: 28px; border-radius: 50%; padding: 0; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);" onclick="parseAndRunCurl()" title="Phân tích & Thực thi cURL">
-                    <i class="ti ti-send" aria-hidden="true" style="font-size: 0.9rem;"></i>
-                  </button>
                 </div>
+                <button class="btn-primary" style="width: 100px; height: 28px; border-radius: var(--radius-md); padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);" onclick="parseAndRunCurl()" title="Phân tích & Thực thi cURL">
+                  <i class="ti ti-send" aria-hidden="true" style="font-size: 0.85rem;"></i>
+                  <span style="font-size: 0.8rem; font-weight: 600; font-family: var(--font-display); letter-spacing: 0.5px;">Send</span>
+                </button>
               </div>
               <textarea id="curlInput" class="form-control" style="min-height: 80px;" placeholder="curl -X GET 'https://jsonplaceholder.typicode.com/posts/1'"></textarea>
             </div>
@@ -764,17 +790,11 @@
           </div>
         </div>
 
-        <!-- Bảng Logs Hoạt Động (Log Panel) -->
-        <div class="log-wrap" id="logPanelContainer" style="display: none;">
-          <div class="log-label"><i class="ti ti-report-analytics" aria-hidden="true"></i> Nhật ký hoạt động</div>
-          <div class="log" id="executionLogs">
-            <!-- Execution logs will print here -->
-          </div>
-        </div>
+
 
         <!-- Response (Bottom Panel) -->
         <div class="panel" style="display: flex; flex-direction: column; min-height: 500px;">
-          <div class="panel-title"><i class="ti ti-file-code" aria-hidden="true"></i> Kết Quả Response</div>
+          <div class="panel-title"><span><i class="ti ti-file-code" aria-hidden="true"></i> Kết Quả Response</span></div>
         
         <!-- Loader Screen -->
         <div class="request-loader" id="reqLoader">
@@ -982,8 +1002,8 @@
         row.innerHTML = `
           <input type="text" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;" placeholder="Content-Type" value="${escapeHtml(header.key)}" oninput="updateHeaderKey(${index}, this.value)">
           <input type="text" class="form-control" style="font-size: 0.85rem; padding: 0.4rem 0.6rem;" placeholder="application/json" value="${escapeHtml(header.value)}" oninput="updateHeaderValue(${index}, this.value)">
-          <button class="btn-icon" style="padding: 0.4rem;" onclick="removeHeaderRow(${index})" title="Xóa header">
-            <i class="ti ti-trash" aria-hidden="true" style="color: var(--accent-danger);"></i>
+          <button class="btn-icon" style="width: 28px !important; height: 28px !important; border-radius: 50% !important; padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border: 1px solid rgba(239, 68, 68, 0.65) !important; background: #0b1a2e !important; transition: all 0.2s !important;" onclick="removeHeaderRow(${index})" title="Xóa header" onmouseover="this.style.setProperty('background', 'rgba(239, 68, 68, 0.15)', 'important'); this.style.setProperty('border-color', 'rgba(239, 68, 68, 1)', 'important')" onmouseout="this.style.setProperty('background', '#0b1a2e', 'important'); this.style.setProperty('border-color', 'rgba(239, 68, 68, 0.65)', 'important')">
+            <i class="ti ti-x" aria-hidden="true" style="color: rgba(248, 113, 113, 1) !important; font-size: 0.9rem !important;"></i>
           </button>
         `;
         container.appendChild(row);
@@ -1022,33 +1042,24 @@
 
     // Logging helpers
     function clearLogs() {
-      document.getElementById('logPanelContainer').style.display = 'block';
-      document.getElementById('executionLogs').innerHTML = '';
+      // Safe no-op as logs DOM is removed
     }
 
     function logInfo(message) {
-      const logs = document.getElementById('executionLogs');
-      logs.innerHTML += `<div class="inf">[INFO] ${escapeHtml(message)}</div>`;
-      logs.scrollTop = logs.scrollHeight;
+      console.log(`[INFO] ${message}`);
     }
 
     // Formatted logs helper methods
     function logOk(message) {
-      const logs = document.getElementById('executionLogs');
-      logs.innerHTML += `<div class="ok">[SUCCESS] ${escapeHtml(message)}</div>`;
-      logs.scrollTop = logs.scrollHeight;
+      console.log(`[SUCCESS] ${message}`);
     }
 
     function logErr(message) {
-      const logs = document.getElementById('executionLogs');
-      logs.innerHTML += `<div class="err">[ERROR] ${escapeHtml(message)}</div>`;
-      logs.scrollTop = logs.scrollHeight;
+      console.error(`[ERROR] ${message}`);
     }
 
     function logHeader(message) {
-      const logs = document.getElementById('executionLogs');
-      logs.innerHTML += `<div class="hd">${escapeHtml(message)}</div>`;
-      logs.scrollTop = logs.scrollHeight;
+      console.log(`--- ${message} ---`);
     }
 
     // HTML escape helper
@@ -1165,8 +1176,7 @@
         document.getElementById('reqBody').value = parsed.body || '';
         renderHeadersList();
 
-        // Automatically switch tabs and execute
-        switchRequestTab('manual');
+        // Automatically execute without switching tabs
         executeManualRequest();
       } catch (e) {
         logErr(`Phân tích cURL thất bại: ${e.message}`);
@@ -1318,9 +1328,47 @@
         console.error(reqErr);
         
         document.getElementById('reqLoader').style.display = 'none';
-        document.getElementById('reqEmptyState').style.display = 'flex';
         
-        alert(`Kết nối API thất bại!\n\nLỗi: ${reqErr.message}\n\nGợi ý: Hãy thử chọn phương thức vượt CORS "AllOrigins CORS Proxy" ở tab cấu hình chi tiết.`);
+        // Construct detailed structured error payload
+        const errorResponse = {
+          "status": "Failed",
+          "error": reqErr.message,
+          "suggestion": "Hãy thử chọn phương thức vượt CORS 'AllOrigins CORS Proxy' ở tab Cấu hình Chi tiết.",
+          "details": "Lỗi này xảy ra khi URL không hợp lệ, máy chủ đích không phản hồi, không có kết nối mạng, hoặc yêu cầu bị chặn bởi chính sách CORS (Cross-Origin Resource Sharing)."
+        };
+
+        // Reset and display status badge
+        const badge = document.getElementById('resStatusBadge');
+        badge.className = 'response-status-badge status-5xx';
+        badge.innerText = 'Error / CORS';
+
+        // Clear headers table or write the error info
+        const headersTable = document.getElementById('responseHeadersTableBody');
+        headersTable.innerHTML = `
+          <tr>
+            <td style="font-weight: 600; color: var(--accent-danger); font-family: var(--font-mono);">Fetch-Error</td>
+            <td style="font-family: var(--font-mono); word-break: break-all;">${escapeHtml(reqErr.message)}</td>
+          </tr>
+        `;
+
+        document.getElementById('resTimeVal').innerText = '-- ms';
+        document.getElementById('resSizeVal').innerText = '-- KB';
+
+        currentResponseData = errorResponse;
+
+        // Render visual JSON Tree Viewer
+        renderJsonTree(currentResponseData);
+        
+        // Render Raw Output
+        document.getElementById('jsonRawOutput').innerHTML = highlightRawJsonHtml(JSON.stringify(currentResponseData, null, 2));
+
+        // Save request response in LocalStorage history list with status 'Error'
+        saveToRequestHistory(url, method, 'Error', currentResponseData);
+
+        // Display results area
+        document.getElementById('reqEmptyState').style.display = 'none';
+        document.getElementById('responseOutputArea').style.display = 'block';
+        switchResponseTab('tree');
       }
     }
 
@@ -1792,59 +1840,136 @@
     let requestHistory = [];
 
     function reconstructCurl(url, method, headers, body) {
-      let cmd = `curl -X ${method} "${url}"`;
+      let cmd = `curl --location '${url}'`;
+      if (method !== 'GET' && method !== 'POST') {
+        cmd += ` \\\n--request ${method}`;
+      } else if (method === 'POST' && (!body || body.trim() === '')) {
+        cmd += ` \\\n--request POST`;
+      }
+      
       if (headers) {
         headers.forEach(h => {
           if (h.key.trim()) {
-            cmd += ` \\\n  -H "${h.key.trim()}: ${h.value}"`;
+            cmd += ` \\\n--header '${h.key.trim()}: ${h.value}'`;
           }
         });
       }
+      
       if (body && method !== 'GET' && method !== 'HEAD') {
-        const escapedBody = body.replace(/"/g, '\\"').replace(/\n/g, ' ');
-        cmd += ` \\\n  -d "${escapedBody}"`;
+        const escapedBody = body.replace(/'/g, "'\\''");
+        cmd += ` \\\n--data '${escapedBody}'`;
       }
       return cmd;
     }
 
     function maskSensitiveHeaders(headers) {
-      if (!headers) return [];
-      const sensitiveKeys = [
-        'authorization', 'api-key', 'api_key', 'apikey', 'token', 'access-token',
-        'x-api-key', 'x-api-token', 'cookie', 'set-cookie', 'secret', 'password',
-        'proxy-authorization', 'x-auth-token', 'x-csrf-token'
-      ];
-      return headers.map(h => {
+    if (!headers) return [];
+    
+    const sensitiveKeys = [
+        // Authentication & Authorization
+        'authorization',
+        'proxy-authorization',
+        'www-authenticate',
+        'x-auth-token',
+        'x-authorization',
+        
+        // API Keys & Tokens
+        'api-key',
+        'api_key',
+        'apikey',
+        'token',
+        'access-token',
+        'access_token',
+        'refresh-token',
+        'refresh_token',
+        'id-token',
+        'id_token',
+        'x-api-key',
+        'x-api-token',
+        'x-access-token',
+        'x-refresh-token',
+        'x-token',
+
+        // Session & Cookies
+        'cookie',
+        'set-cookie',
+        'session',
+        'session-id',
+        'sessionid',
+        'x-session-token',
+
+        // Secrets & Credentials
+        'secret',
+        'client-secret',
+        'client_secret',
+        'password',
+        'passwd',
+        'private-key',
+        'private_key',
+
+        // CSRF
+        'x-csrf-token',
+        'x-xsrf-token',
+        'csrf-token',
+        'xsrf-token',
+
+        // Cloud Providers
+        'x-amz-security-token',       // AWS STS
+        'x-amz-credential',           // AWS Signature
+        'x-goog-api-key',             // Google Cloud
+        'x-ms-token',                 // Azure
+
+        // Misc service-specific
+        'x-forwarded-authorization',
+        'x-real-ip',                  // có thể chứa PII
+        'x-client-secret',
+        'x-webhook-secret',
+        'x-hub-signature',            // GitHub webhooks
+        'x-hub-signature-256',
+        'x-gitlab-token',
+        'x-jira-token',
+        'stripe-signature',           // Stripe webhooks
+    ];
+    
+    return headers.map(h => {
         const keyLower = h.key.trim().toLowerCase();
         const isSensitive = sensitiveKeys.some(sk => keyLower.includes(sk));
         if (isSensitive && h.value) {
-          return {
-            key: h.key,
-            value: '●●●●●● [REDACTED]'
-          };
+        return { key: h.key, value: '****** [REDACTED]' };
         }
-        return {
-          key: h.key,
-          value: h.value
-        };
-      });
+        return { key: h.key, value: h.value };
+    });
     }
+
+    // Cache for plaintext request credentials during active session in memory only (never written to disk)
+    const activeSessionPlaintextCache = new Map();
 
     function saveToRequestHistory(url, method, status, responseJson) {
       try {
         const bodyVal = document.getElementById('reqBody').value;
+        const plaintextHeaders = JSON.parse(JSON.stringify(requestHeadersList));
+        const plaintextCurl = reconstructCurl(url, method, plaintextHeaders, bodyVal);
+
         const maskedHeaders = maskSensitiveHeaders(requestHeadersList);
-        const curlCmd = reconstructCurl(url, method, maskedHeaders, bodyVal);
+        const maskedCurl = reconstructCurl(url, method, maskedHeaders, bodyVal);
         
+        const itemId = Date.now() + Math.random().toString(36).substr(2, 5);
+
+        // Store plaintext in active session cache
+        activeSessionPlaintextCache.set(itemId, {
+          headers: plaintextHeaders,
+          curl: plaintextCurl
+        });
+
         const item = {
-          id: Date.now() + Math.random().toString(36).substr(2, 5),
+          id: itemId,
           url: url,
           method: method,
           status: status,
           timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
           response: responseJson,
-          curl: curlCmd,
-          headers: maskedHeaders,
+          curl: maskedCurl,         // Stored securely masked in localStorage
+          headers: maskedHeaders,   // Stored securely masked in localStorage
           body: bodyVal
         };
         
@@ -1878,12 +2003,17 @@
     function restoreRequestFromHistory(id) {
       const item = requestHistory.find(h => h.id === id);
       if (item) {
+        // Retrieve original plaintext if present in this session, otherwise use masked fallback
+        const cachedPlaintext = activeSessionPlaintextCache.get(id);
+        const displayCurl = cachedPlaintext ? cachedPlaintext.curl : (item.curl || '');
+        const displayHeaders = cachedPlaintext ? cachedPlaintext.headers : (item.headers || []);
+
         // Restore request fields
-        document.getElementById('curlInput').value = item.curl || '';
+        document.getElementById('curlInput').value = displayCurl;
         document.getElementById('reqUrl').value = item.url || '';
         document.getElementById('reqMethod').value = item.method || 'GET';
         document.getElementById('reqBody').value = item.body || '';
-        requestHeadersList = item.headers ? JSON.parse(JSON.stringify(item.headers)) : [];
+        requestHeadersList = displayHeaders ? JSON.parse(JSON.stringify(displayHeaders)) : [];
         renderHeadersList();
         
         // Log feedback
@@ -1891,13 +2021,16 @@
         logHeader('🔄 Đã khôi phục cấu hình Request từ Lịch sử!');
         logInfo(`Method: ${item.method}`);
         logInfo(`URL: ${item.url}`);
+        if (!cachedPlaintext) {
+          logInfo('⚠️ Lưu ý: Các API Key đã được bảo mật (Masked) trong LocalStorage để tránh bị lộ. Vui lòng nhập lại API Key thực tế của bạn.');
+        }
         
         // Populate and render that historical response
         currentResponseData = item.response;
         updateResponseViews(currentResponseData);
         
         // Show corresponding cURL Request
-        currentCurlRequest = item.curl || '';
+        currentCurlRequest = displayCurl;
         document.getElementById('jsonCurlOutput').innerHTML = highlightCurlHtml(currentCurlRequest);
         
         const badge = document.getElementById('resStatusBadge');
@@ -2007,8 +2140,8 @@
               </div>
             </div>
           </div>
-          <button class="btn-icon" style="padding: 0.25rem;" onclick="removeHistoryItem('${item.id}', event)" title="Xóa">
-            <i class="ti ti-x" aria-hidden="true" style="color: var(--accent-danger); font-size: 0.9rem;"></i>
+          <button class="btn-icon" style="width: 24px !important; height: 24px !important; border-radius: 50% !important; padding: 0 !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; border: 1px solid rgba(239, 68, 68, 0.65) !important; background: #0b1a2e !important; transition: all 0.2s !important; flex-shrink: 0 !important;" onclick="removeHistoryItem('${item.id}', event)" title="Xóa" onmouseover="this.style.setProperty('background', 'rgba(239, 68, 68, 0.15)', 'important'); this.style.setProperty('border-color', 'rgba(239, 68, 68, 1)', 'important')" onmouseout="this.style.setProperty('background', '#0b1a2e', 'important'); this.style.setProperty('border-color', 'rgba(239, 68, 68, 0.65)', 'important')">
+            <i class="ti ti-x" aria-hidden="true" style="color: rgba(248, 113, 113, 1) !important; font-size: 0.8rem !important;"></i>
           </button>
         `;
         historyList.appendChild(card);
