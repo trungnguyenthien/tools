@@ -1329,6 +1329,17 @@
 
     // Initialize application settings & theme on start
     function initApp() {
+      // Invalidate old cache version to ensure new US phonetic priority matches
+      try {
+        const cacheVer = localStorage.getItem('word_details_cache_version');
+        if (cacheVer !== 'v2') {
+          localStorage.removeItem('word_details_cache');
+          localStorage.setItem('word_details_cache_version', 'v2');
+        }
+      } catch (e) {
+        console.warn('Failed to clear old word cache', e);
+      }
+
       // 1. Theme Configuration
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
