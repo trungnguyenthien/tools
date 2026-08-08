@@ -336,45 +336,65 @@
     }
 
     .word-meaning {
-      font-size: 0.78rem;
+      font-size: 0.8rem;
       color: var(--text-secondary);
-      line-height: 1.4;
+      line-height: 1.45;
       text-align: center;
       font-style: italic;
-      width: 100%;
-      box-sizing: border-box;
     }
 
-    .meanings-above {
-      margin-top: 0.25rem;
-      margin-bottom: 0.5rem;
+    .meanings-scroller {
+      flex: 1;
+      width: 100%;
+      overflow-y: auto;
+      padding: 0.2rem 0.5rem;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      gap: 0.2rem;
-      max-height: 72px;
-      overflow-y: auto;
+      gap: 0.45rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-color) transparent;
+      max-height: 40vh;
     }
 
-    .meanings-below {
-      margin-top: 0.5rem;
-      margin-bottom: 0.25rem;
-      max-height: 38px;
-      overflow-y: auto;
+    .meanings-scroller::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .meanings-scroller::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 2px;
     }
 
     .meaning-item {
       word-break: break-word;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      font-style: italic;
+      text-align: left;
+      padding: 0.25rem 0;
     }
 
     .pos-tag {
       font-weight: 700;
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      padding: 0.05rem 0.3rem;
+      padding: 0.05rem 0.25rem;
       background: var(--primary-glow);
       color: var(--primary-color);
       border-radius: 4px;
-      margin-right: 0.25rem;
+      margin-right: 0.35rem;
+      display: inline-block;
+    }
+
+    .board-bottom-controls {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      flex-shrink: 0;
     }
 
     .result-badge {
@@ -1110,64 +1130,63 @@
           <span class="word-ipa" id="targetWordIpa"></span>
         </div>
 
-        <!-- Meanings 1 & 2 (Above buttons) -->
-        <div class="word-meaning meanings-above" id="meaningsAbove"></div>
+        <!-- Scrollable meanings list area -->
+        <div class="meanings-scroller" id="meaningsScroller"></div>
 
         <div class="result-badge" id="resultBadge">
           <!-- Populated dynamically -->
         </div>
 
-        <!-- Symmetric Control Buttons Row (Voice on left, Record on right) -->
-        <div class="control-row">
-          <!-- Voice Accent Speaker Button (Green) -->
-          <button class="voice-btn" id="speakWordBtn" title="Listen to pronunciation" aria-label="Listen to pronunciation">
-            <svg viewBox="0 0 24 24">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            </svg>
-          </button>
-
-          <!-- Record Microphone Wrapper (Blue, Red when recording) -->
-          <div class="record-wrapper">
-            <svg class="progress-ring" width="90" height="90">
-              <circle class="progress-ring__track" cx="45" cy="45" r="39" stroke-width="3.5" />
-              <circle class="progress-ring__circle" cx="45" cy="45" r="39" stroke-width="3.5" />
-            </svg>
-            <button class="mic-btn" id="micBtn" aria-label="Start recording speech" title="Tap to Speak">
+        <!-- Symmetric Control Buttons Row & Voice selector at the bottom -->
+        <div class="board-bottom-controls">
+          <div class="control-row">
+            <!-- Voice Accent Speaker Button (Green) -->
+            <button class="voice-btn" id="speakWordBtn" title="Listen to pronunciation" aria-label="Listen to pronunciation">
               <svg viewBox="0 0 24 24">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path>
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
               </svg>
             </button>
-            <div class="mic-ring"></div>
-            <div class="mic-ring mic-ring-2"></div>
+
+            <!-- Record Microphone Wrapper (Blue, Red when recording) -->
+            <div class="record-wrapper">
+              <svg class="progress-ring" width="90" height="90">
+                <circle class="progress-ring__track" cx="45" cy="45" r="39" stroke-width="3.5" />
+                <circle class="progress-ring__circle" cx="45" cy="45" r="39" stroke-width="3.5" />
+              </svg>
+              <button class="mic-btn" id="micBtn" aria-label="Start recording speech" title="Tap to Speak">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path>
+                </svg>
+              </button>
+              <div class="mic-ring"></div>
+              <div class="mic-ring mic-ring-2"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- Meaning 3 (Below buttons) -->
-        <div class="word-meaning meanings-below" id="meaningsBelow"></div>
+          <!-- Simulated Visualizer -->
+          <div class="visualizer" id="micVisualizer">
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+            <div class="visualizer-bar"></div>
+          </div>
 
-        <!-- Simulated Visualizer -->
-        <div class="visualizer" id="micVisualizer">
-          <div class="visualizer-bar"></div>
-          <div class="visualizer-bar"></div>
-          <div class="visualizer-bar"></div>
-          <div class="visualizer-bar"></div>
-          <div class="visualizer-bar"></div>
-        </div>
+          <div class="status-text" id="statusText" aria-live="polite">Tap microphone and speak</div>
 
-        <div class="status-text" id="statusText" aria-live="polite">Tap microphone and speak</div>
-
-        <!-- Voice Accent Selector Button-styled Dropdown -->
-        <div class="voice-picker-container">
-          <svg class="voice-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-          <select id="voiceSelect" class="form-control select-accent" aria-label="Select English Accent">
-            <option value="">Default English Accent</option>
-          </select>
+          <!-- Voice Accent Selector Button-styled Dropdown -->
+          <div class="voice-picker-container">
+            <svg class="voice-picker-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <select id="voiceSelect" class="form-control select-accent" aria-label="Select English Accent">
+              <option value="">Default English Accent</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1450,59 +1469,41 @@
       }
     }
 
-    // Displays phonetic IPA and meaning properties split above/below
+    // Displays phonetic IPA and meanings inside the unified meanings scroller
     function displayWordDetails(ipa, definitions) {
       const ipaEl = document.getElementById('targetWordIpa');
-      const aboveEl = document.getElementById('meaningsAbove');
-      const belowEl = document.getElementById('meaningsBelow');
+      const scrollerEl = document.getElementById('meaningsScroller');
       
-      ipaEl.textContent = ipa ? ipa : '';
-      ipaEl.style.display = ipa ? 'inline-block' : 'none';
+      // Simplify IPA characters: ɹ -> r, ɾ -> t, ɫ -> l
+      const displayIpa = ipa ? ipa.replace(/ɹ/g, 'r').replace(/ɾ/g, 't').replace(/ɫ/g, 'l') : '';
       
-      aboveEl.innerHTML = '';
-      belowEl.innerHTML = '';
+      ipaEl.textContent = displayIpa;
+      ipaEl.style.display = displayIpa ? 'inline-block' : 'none';
+      
+      scrollerEl.innerHTML = '';
       
       if (!definitions) {
-        aboveEl.style.display = 'none';
-        belowEl.style.display = 'none';
         return;
       }
       
       // Fallback if cached value is old schema string meaning
       if (typeof definitions === 'string') {
-        aboveEl.innerHTML = `<div class="meaning-item">${escapeHTML(definitions)}</div>`;
-        aboveEl.style.display = 'flex';
-        belowEl.style.display = 'none';
+        scrollerEl.innerHTML = `<div class="meaning-item">${escapeHTML(definitions)}</div>`;
         return;
       }
       
       if (definitions.length === 0) {
-        aboveEl.innerHTML = '<div class="meaning-item">Definition not found.</div>';
-        aboveEl.style.display = 'flex';
-        belowEl.style.display = 'none';
+        scrollerEl.innerHTML = '<div class="meaning-item">Definition not found.</div>';
         return;
       }
       
-      // Render 1 & 2 above
-      let aboveHTML = '';
-      const limitAbove = Math.min(definitions.length, 2);
-      for (let i = 0; i < limitAbove; i++) {
-        const def = definitions[i];
+      // Render all definitions
+      let html = '';
+      definitions.forEach(def => {
         const posHTML = def.pos ? `<span class="pos-tag">${escapeHTML(def.pos)}</span>` : '';
-        aboveHTML += `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
-      }
-      aboveEl.innerHTML = aboveHTML;
-      aboveEl.style.display = aboveHTML ? 'flex' : 'none';
-      
-      // Render 3 below
-      if (definitions.length >= 3) {
-        const def = definitions[2];
-        const posHTML = def.pos ? `<span class="pos-tag">${escapeHTML(def.pos)}</span>` : '';
-        belowEl.innerHTML = `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
-        belowEl.style.display = 'block';
-      } else {
-        belowEl.style.display = 'none';
-      }
+        html += `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
+      });
+      scrollerEl.innerHTML = html;
     }
 
     async function loadWordDetails(word) {
@@ -1532,11 +1533,32 @@
         const data = await response.json();
         const entry = data[0] || {};
 
-        // Extract IPA
-        let ipa = entry.phonetic || '';
-        if (!ipa && entry.phonetics) {
-          const withText = entry.phonetics.find(p => p.text);
-          if (withText) ipa = withText.text;
+        // Extract IPA (Prioritizing US phonetics)
+        let ipa = '';
+        const phonetics = entry.phonetics || [];
+        
+        // 1. Prefer US audio phonetic (e.g. includes '-us.mp3')
+        const usEntry = phonetics.find(p => p.audio && p.audio.includes('-us.mp3') && p.text);
+        if (usEntry) {
+          ipa = usEntry.text;
+        }
+        
+        // 2. Fallback to any phonetic with audio and text
+        if (!ipa) {
+          const anyWithAudio = phonetics.find(p => p.audio && p.text);
+          if (anyWithAudio) {
+            ipa = anyWithAudio.text;
+          }
+        }
+        
+        // 3. Fallback to top-level phonetic field or first entry with text
+        if (!ipa) {
+          ipa = entry.phonetic || phonetics.find(p => p.text)?.text || '';
+        }
+
+        // Simplify IPA characters: ɹ -> r, ɾ -> t, ɫ -> l
+        if (ipa) {
+          ipa = ipa.replace(/ɹ/g, 'r').replace(/ɾ/g, 't').replace(/ɫ/g, 'l');
         }
 
         // Extract up to 3 definitions
