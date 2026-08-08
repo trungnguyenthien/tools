@@ -301,8 +301,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
+      justify-content: space-evenly;
       min-height: 0; /* lets flex layout scale it down */
       padding: 0.5rem 0;
       position: relative;
@@ -333,59 +332,6 @@
       color: var(--primary-color);
       letter-spacing: 0.03em;
       margin-left: 0.5rem;
-    }
-
-    .word-meaning {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      line-height: 1.45;
-      text-align: center;
-      font-style: italic;
-    }
-
-    .meanings-scroller {
-      flex: 1;
-      width: 100%;
-      overflow-y: auto;
-      padding: 0.2rem 0.5rem;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      gap: 0.45rem;
-      scrollbar-width: thin;
-      scrollbar-color: var(--border-color) transparent;
-      max-height: 32vh;
-    }
-
-    .meanings-scroller::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .meanings-scroller::-webkit-scrollbar-thumb {
-      background: var(--border-color);
-      border-radius: 2px;
-    }
-
-    .meaning-item {
-      word-break: break-word;
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      line-height: 1.4;
-      font-style: italic;
-      text-align: left;
-      padding: 0.25rem 0;
-    }
-
-    .pos-tag {
-      font-weight: 700;
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      padding: 0.05rem 0.25rem;
-      background: var(--primary-glow);
-      color: var(--primary-color);
-      border-radius: 4px;
-      margin-right: 0.35rem;
-      display: inline-block;
     }
 
     .board-bottom-controls {
@@ -1130,8 +1076,7 @@
           <span class="word-ipa" id="targetWordIpa"></span>
         </div>
 
-        <!-- Scrollable meanings list area -->
-        <div class="meanings-scroller" id="meaningsScroller"></div>
+
 
         <div class="result-badge" id="resultBadge">
           <!-- Populated dynamically -->
@@ -1231,6 +1176,7 @@
 
   </div>
 
+  <script src="pronunciation-dict.js"></script>
   <script>
     // State management
     const state = {
@@ -1330,18 +1276,7 @@
     }
 
     // Initialize application settings & theme on start
-    function initApp() {
-      // Invalidate old cache version to ensure new US phonetic priority matches
-      try {
-        const cacheVer = localStorage.getItem('word_details_cache_version');
-        if (cacheVer !== 'v3') {
-          localStorage.removeItem('word_details_cache');
-          localStorage.setItem('word_details_cache_version', 'v3');
-        }
-      } catch (e) {
-        console.warn('Failed to clear old word cache', e);
-      }
-
+    async function initApp() {
       // 1. Theme Configuration
       const savedTheme = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -1372,14 +1307,21 @@
       }
       updateHistoryCounters();
 
-      // 4. Set Initial Word
+      // 4. Set Initial Word placeholder
       const savedWord = localStorage.getItem('active_practice_word') || 'practice';
       state.targetWord = savedWord;
       targetWordDisplay.textContent = savedWord;
       wordInput.value = savedWord;
+
+      // 5. Load dictionary database
+      statusText.textContent = 'Loading pronunciation database...';
+      await loadPronunciationDict();
+      statusText.textContent = 'Tap microphone and speak';
+
+      // Show initial word details now that dict is loaded
       loadWordDetails(savedWord);
 
-      // 5. Speech Recognition Compatibility Checking
+      // 6. Speech Recognition Compatibility Checking
       if (!isRecognitionSupported) {
         compatAlert.style.display = 'flex';
         micBtn.disabled = true;
@@ -1451,35 +1393,36 @@
       targetWordDisplay.style.animation = 'fadeIn 0.5s ease-out';
     }
 
-    // Word Dictionary Cache & API Fetchers
-    function getCachedWordDetails(word) {
-      try {
-        const cacheStr = localStorage.getItem('word_details_cache');
-        if (cacheStr) {
-          const cache = JSON.parse(cacheStr);
-          const cached = cache[word];
-          if (cached) {
-            return {
-              ipa: cached.ipa,
-              definitions: cached.definitions !== undefined ? cached.definitions : cached.meaning
-            };
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to parse word details cache', e);
+    const pronunciationDict = new Map();
+
+    async function loadPronunciationDict() {
+      // 1. Prefer loading from the script-embedded window global (bypasses local CORS on file:// protocol)
+      if (window.PRONUNCIATION_DICT) {
+        populateDictFromData(window.PRONUNCIATION_DICT);
+        return;
       }
-      return null;
+
+      // 2. Fallback to asynchronous JSON fetch
+      try {
+        const response = await fetch('./pronunciation-dict.json');
+        if (!response.ok) {
+          console.error('Failed to load pronunciation-dict.json');
+          return;
+        }
+        const data = await response.json();
+        populateDictFromData(data);
+      } catch (e) {
+        console.error('Failed to parse pronunciation dict', e);
+      }
     }
 
-    function setCachedWordDetails(word, details) {
-      try {
-        const cacheStr = localStorage.getItem('word_details_cache') || '{}';
-        const cache = JSON.parse(cacheStr);
-        cache[word] = details;
-        localStorage.setItem('word_details_cache', JSON.stringify(cache));
-      } catch (e) {
-        console.warn('Failed to save word details cache', e);
-      }
+    function populateDictFromData(data) {
+      pronunciationDict.clear();
+      data.forEach(item => {
+        if (item.word && item.ipa_us) {
+          pronunciationDict.set(item.word.toLowerCase(), item.ipa_us);
+        }
+      });
     }
 
     /**
@@ -1498,121 +1441,21 @@
         .trim();
     }
 
-    // Displays phonetic IPA and meanings inside the unified meanings scroller
-    function displayWordDetails(ipa, definitions) {
+    // Displays phonetic IPA
+    function displayWordDetails(ipa) {
       const ipaEl = document.getElementById('targetWordIpa');
-      const scrollerEl = document.getElementById('meaningsScroller');
-      
       const displayIpa = simplifyIPA(ipa);
       
-      ipaEl.textContent = displayIpa;
+      ipaEl.textContent = displayIpa ? `/${displayIpa}/` : '';
       ipaEl.style.display = displayIpa ? 'inline-block' : 'none';
-      
-      scrollerEl.innerHTML = '';
-      
-      if (!definitions) {
-        return;
-      }
-      
-      // Fallback if cached value is old schema string meaning
-      if (typeof definitions === 'string') {
-        scrollerEl.innerHTML = `<div class="meaning-item">${escapeHTML(definitions)}</div>`;
-        return;
-      }
-      
-      if (definitions.length === 0) {
-        scrollerEl.innerHTML = '<div class="meaning-item">Definition not found.</div>';
-        return;
-      }
-      
-      // Render all definitions
-      let html = '';
-      definitions.forEach(def => {
-        const posHTML = def.pos ? `<span class="pos-tag">${escapeHTML(def.pos)}</span>` : '';
-        html += `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
-      });
-      scrollerEl.innerHTML = html;
     }
 
-    async function loadWordDetails(word) {
+    function loadWordDetails(word) {
       const cleanWord = word.trim().toLowerCase();
       if (!cleanWord) return;
 
-      const cached = getCachedWordDetails(cleanWord);
-      if (cached) {
-        displayWordDetails(cached.ipa, cached.definitions);
-        return;
-      }
-
-      // Show Loading indicators
-      displayWordDetails('...', [{ pos: '', definition: 'Loading definition...' }]);
-
-      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) {
-          // Word details fallback if missing
-          const fallback = { ipa: '', definitions: [] };
-          setCachedWordDetails(cleanWord, fallback);
-          displayWordDetails(fallback.ipa, fallback.definitions);
-          return;
-        }
-
-        const data = await response.json();
-        const entry = data[0] || {};
-
-        // Extract IPA (Prioritizing US phonetics)
-        let ipa = '';
-        const phonetics = entry.phonetics || [];
-        
-        // 1. Prefer US audio phonetic (e.g. includes '-us.mp3')
-        const usEntry = phonetics.find(p => p.audio && p.audio.includes('-us.mp3') && p.text);
-        if (usEntry) {
-          ipa = usEntry.text;
-        }
-        
-        // 2. Fallback to any phonetic with audio and text
-        if (!ipa) {
-          const anyWithAudio = phonetics.find(p => p.audio && p.text);
-          if (anyWithAudio) {
-            ipa = anyWithAudio.text;
-          }
-        }
-        
-        // 3. Fallback to top-level phonetic field or first entry with text
-        if (!ipa) {
-          ipa = entry.phonetic || phonetics.find(p => p.text)?.text || '';
-        }
-
-        // Simplify IPA characters
-        if (ipa) {
-          ipa = simplifyIPA(ipa);
-        }
-
-        // Extract up to 3 definitions
-        const definitions = [];
-        if (entry.meanings) {
-          for (const m of entry.meanings) {
-            const pos = m.partOfSpeech || '';
-            for (const d of m.definitions || []) {
-              if (definitions.length < 3) {
-                definitions.push({
-                  pos: pos,
-                  definition: d.definition
-                });
-              }
-            }
-          }
-        }
-
-        const details = { ipa, definitions };
-        setCachedWordDetails(cleanWord, details);
-        displayWordDetails(details.ipa, details.definitions);
-      } catch (err) {
-        console.error('Failed to load dictionary API data', err);
-        // Show fallback but don't cache to allow retry
-        displayWordDetails('', [{ pos: '', definition: 'Temporary definition error' }]);
-      }
+      const ipa = pronunciationDict.get(cleanWord) || '';
+      displayWordDetails(ipa);
     }
 
     setWordBtn.addEventListener('click', setTargetWord);
