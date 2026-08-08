@@ -1334,9 +1334,9 @@
       // Invalidate old cache version to ensure new US phonetic priority matches
       try {
         const cacheVer = localStorage.getItem('word_details_cache_version');
-        if (cacheVer !== 'v2') {
+        if (cacheVer !== 'v3') {
           localStorage.removeItem('word_details_cache');
-          localStorage.setItem('word_details_cache_version', 'v2');
+          localStorage.setItem('word_details_cache_version', 'v3');
         }
       } catch (e) {
         console.warn('Failed to clear old word cache', e);
@@ -1482,13 +1482,28 @@
       }
     }
 
+    /**
+     * Simplify narrow phonetic IPA detail characters to match learner dictionaries.
+     * Glottal stops and unreleased marks are removed, and key phonemes are simplified.
+     */
+    function simplifyIPA(ipa) {
+      if (!ipa) return '';
+      return ipa
+        .replace(/ɹ/g, 'r')      // academic "r" -> common "r"
+        .replace(/ɾ/g, 't')      // alveolar tap -> plain "t"
+        .replace(/ɫ/g, 'l')      // dark L -> plain "l"
+        .replace(/ʔ/g, '')       // remove glottal stop markers
+        .replace(/[̚]/g, '')      // remove unreleased-stop diacritic (combining char, U+031A)
+        .replace(/\s+/g, ' ')    // clean up any leftover extra spaces
+        .trim();
+    }
+
     // Displays phonetic IPA and meanings inside the unified meanings scroller
     function displayWordDetails(ipa, definitions) {
       const ipaEl = document.getElementById('targetWordIpa');
       const scrollerEl = document.getElementById('meaningsScroller');
       
-      // Simplify IPA characters: ɹ -> r, ɾ -> t, ɫ -> l
-      const displayIpa = ipa ? ipa.replace(/ɹ/g, 'r').replace(/ɾ/g, 't').replace(/ɫ/g, 'l') : '';
+      const displayIpa = simplifyIPA(ipa);
       
       ipaEl.textContent = displayIpa;
       ipaEl.style.display = displayIpa ? 'inline-block' : 'none';
@@ -1569,9 +1584,9 @@
           ipa = entry.phonetic || phonetics.find(p => p.text)?.text || '';
         }
 
-        // Simplify IPA characters: ɹ -> r, ɾ -> t, ɫ -> l
+        // Simplify IPA characters
         if (ipa) {
-          ipa = ipa.replace(/ɹ/g, 'r').replace(/ɾ/g, 't').replace(/ɫ/g, 'l');
+          ipa = simplifyIPA(ipa);
         }
 
         // Extract up to 3 definitions
