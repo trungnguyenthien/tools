@@ -1236,6 +1236,8 @@
     const state = {
       targetWord: 'practice',
       isListening: false,
+      hasReceivedResult: false,
+      hasError: false,
       history: [],
       selectedVoiceName: '',
       isAnimating: false
@@ -1717,6 +1719,8 @@
 
       // Reset practice card state
       clearPracticeCardStyles();
+      state.hasReceivedResult = false;
+      state.hasError = false;
 
       recognitionInstance = new SpeechRecognition();
       recognitionInstance.lang = 'en-US';
@@ -1750,12 +1754,14 @@
       };
 
       recognitionInstance.onresult = (event) => {
+        state.hasReceivedResult = true;
         const transcript = event.results[0][0].transcript;
         evaluatePronunciation(transcript);
       };
 
       recognitionInstance.onerror = (event) => {
         console.error('Speech Recognition Error', event.error);
+        state.hasError = true;
         state.isListening = false;
         micBtn.classList.remove('listening');
         micVisualizer.classList.remove('active');
@@ -1770,6 +1776,7 @@
             statusText.textContent = 'Microphone access blocked.';
             break;
           case 'no-speech':
+            showFeedback('unrecognized', '');
             statusText.textContent = 'No speech detected.';
             break;
           case 'network':
@@ -1790,8 +1797,8 @@
         clearTimeout(recordingTimeout);
         resetProgressRing();
 
-        if (statusText.textContent === 'Listening... Speak now') {
-          statusText.textContent = 'Tap microphone and speak';
+        if (!state.hasReceivedResult && !state.hasError) {
+          showFeedback('unrecognized', '');
         }
       };
 
@@ -1824,7 +1831,7 @@
       const isCorrect = (targetNormal === transcriptNormal);
       const outcome = isCorrect ? 'correct' : 'incorrect';
 
-      showFeedback(outcome);
+      showFeedback(outcome, transcript);
 
       if (!isCorrect) {
         speakAgainPrompt();
@@ -1835,7 +1842,7 @@
     }
 
     // Animation visual overlays showing success or failure
-    function showFeedback(result) {
+    function showFeedback(result, transcript) {
       state.isAnimating = true;
       
       // Reset styling
@@ -1844,9 +1851,11 @@
       // Force Reflow
       practiceCard.offsetWidth;
 
+      const escapedTranscript = transcript ? escapeHTML(transcript) : '';
+
       if (result === 'correct') {
         practiceCard.classList.add('flash-success');
-        statusText.textContent = 'Matched!';
+        statusText.innerHTML = `Heard: <strong>"${escapedTranscript}"</strong> (Matched!)`;
         
         resultBadge.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -1855,9 +1864,9 @@
           ✓ Correct
         `;
         resultBadge.className = 'result-badge result-badge-success visible';
-      } else {
+      } else if (result === 'incorrect') {
         practiceCard.classList.add('flash-error');
-        statusText.textContent = 'Try again...';
+        statusText.innerHTML = `Heard: <strong>"${escapedTranscript}"</strong> (Try again...)`;
         
         resultBadge.innerHTML = `
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -1865,6 +1874,20 @@
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
           ✗ Try Again
+        `;
+        resultBadge.className = 'result-badge result-badge-error visible';
+      } else {
+        // Unrecognized / No Speech
+        practiceCard.classList.add('flash-error');
+        statusText.innerHTML = `No speech recognized. Please speak clearly.`;
+        
+        resultBadge.innerHTML = `
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          ✗ Unrecognized
         `;
         resultBadge.className = 'result-badge result-badge-error visible';
       }
