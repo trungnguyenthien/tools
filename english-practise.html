@@ -327,32 +327,54 @@
       text-align: center;
     }
 
-    .speak-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--primary-glow);
-      border: 1px solid rgba(129, 140, 248, 0.15);
+    .word-ipa {
+      font-size: 1.1rem;
+      font-weight: 600;
       color: var(--primary-color);
+      letter-spacing: 0.03em;
+      margin-left: 0.5rem;
+    }
+
+    .word-meaning {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      text-align: center;
+      font-style: italic;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .meanings-above {
+      margin-top: 0.25rem;
+      margin-bottom: 0.5rem;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      flex-direction: column;
+      gap: 0.2rem;
+      max-height: 72px;
+      overflow-y: auto;
     }
 
-    .speak-btn:hover {
-      background: var(--primary-color);
-      color: #FFFFFF;
-      transform: scale(1.05);
+    .meanings-below {
+      margin-top: 0.5rem;
+      margin-bottom: 0.25rem;
+      max-height: 38px;
+      overflow-y: auto;
     }
 
-    .speak-btn svg {
-      width: 16px;
-      height: 16px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 2.5;
+    .meaning-item {
+      word-break: break-word;
+    }
+
+    .pos-tag {
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      padding: 0.05rem 0.3rem;
+      background: var(--primary-glow);
+      color: var(--primary-color);
+      border-radius: 4px;
+      margin-right: 0.25rem;
     }
 
     .result-badge {
@@ -385,18 +407,69 @@
       border: 1px solid rgba(198, 40, 40, 0.15);
     }
 
-    /* Microphone Circular Control */
-    .mic-container {
-      position: relative;
+    .control-row {
       display: flex;
       justify-content: center;
       align-items: center;
+      gap: 2rem;
       margin: 0.5rem 0;
+      flex-shrink: 0;
+      width: 100%;
     }
 
+    /* Voice Button (Green) */
+    .voice-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--success-color);
+      border: none;
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 6px 16px var(--success-glow);
+    }
+
+    .voice-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 20px var(--success-glow);
+    }
+
+    .voice-btn:active {
+      transform: scale(0.98);
+    }
+
+    .voice-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .voice-btn svg {
+      width: 26px;
+      height: 26px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+    }
+
+    /* Record Button Wrapper */
+    .record-wrapper {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Mic Button (Blue, Red when recording) */
     .mic-btn {
-      width: 76px;
-      height: 76px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: var(--primary-color);
       border: none;
@@ -408,11 +481,12 @@
       position: relative;
       z-index: 2;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 8px 20px var(--primary-glow);
+      box-shadow: 0 6px 16px var(--primary-glow);
     }
 
     .mic-btn:hover:not(:disabled) {
       transform: scale(1.05);
+      box-shadow: 0 8px 20px var(--primary-glow);
     }
 
     .mic-btn:active:not(:disabled) {
@@ -427,11 +501,16 @@
     }
 
     .mic-btn svg {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2.2;
+    }
+
+    .mic-btn.listening {
+      background: var(--error-color) !important;
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35) !important;
     }
 
     /* Circular Progress Ring around mic button */
@@ -442,8 +521,8 @@
       transform: translate(-50%, -50%) rotate(-90deg);
       z-index: 1;
       pointer-events: none;
-      width: 98px;
-      height: 98px;
+      width: 80px;
+      height: 80px;
     }
 
     .progress-ring__track {
@@ -460,26 +539,21 @@
       fill: transparent;
       stroke: var(--error-color);
       stroke-linecap: round;
-      /* 2 * Math.PI * 43 = 270.176 */
-      stroke-dasharray: 270.2;
-      stroke-dashoffset: 270.2;
+      /* 2 * Math.PI * 35 = 219.911 */
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
       transition: stroke-dashoffset 0.03s linear;
     }
 
     .mic-ring {
       position: absolute;
-      width: 76px;
-      height: 76px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       background: var(--error-color);
       opacity: 0;
       z-index: 1;
       pointer-events: none;
-    }
-
-    .mic-btn.listening {
-      background: var(--error-color) !important;
-      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35) !important;
     }
 
     .mic-btn.listening ~ .mic-ring {
@@ -1033,34 +1107,45 @@
       <div class="practice-board">
         <div class="word-title-row">
           <h2 class="target-word" id="targetWordDisplay">practice</h2>
-          <button class="speak-btn" id="speakWordBtn" title="Listen to pronunciation" aria-label="Listen to pronunciation">
-            <svg viewBox="0 0 24 24">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-            </svg>
-          </button>
+          <span class="word-ipa" id="targetWordIpa"></span>
         </div>
+
+        <!-- Meanings 1 & 2 (Above buttons) -->
+        <div class="word-meaning meanings-above" id="meaningsAbove"></div>
 
         <div class="result-badge" id="resultBadge">
           <!-- Populated dynamically -->
         </div>
 
-        <!-- Microphones buttons -->
-        <div class="mic-container">
-          <!-- Circular SVG Progress Ring -->
-          <svg class="progress-ring" width="98" height="98">
-            <circle class="progress-ring__track" cx="49" cy="49" r="43" stroke-width="4" />
-            <circle class="progress-ring__circle" cx="49" cy="49" r="43" stroke-width="4" />
-          </svg>
-          <button class="mic-btn" id="micBtn" aria-label="Start recording speech" title="Tap to Speak">
+        <!-- Symmetric Control Buttons Row (Voice on left, Record on right) -->
+        <div class="control-row">
+          <!-- Voice Accent Speaker Button (Green) -->
+          <button class="voice-btn" id="speakWordBtn" title="Listen to pronunciation" aria-label="Listen to pronunciation">
             <svg viewBox="0 0 24 24">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path>
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
             </svg>
           </button>
-          <div class="mic-ring"></div>
-          <div class="mic-ring mic-ring-2"></div>
+
+          <!-- Record Microphone Wrapper (Blue, Red when recording) -->
+          <div class="record-wrapper">
+            <svg class="progress-ring" width="80" height="80">
+              <circle class="progress-ring__track" cx="40" cy="40" r="35" stroke-width="3" />
+              <circle class="progress-ring__circle" cx="40" cy="40" r="35" stroke-width="3" />
+            </svg>
+            <button class="mic-btn" id="micBtn" aria-label="Start recording speech" title="Tap to Speak">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"></path>
+              </svg>
+            </button>
+            <div class="mic-ring"></div>
+            <div class="mic-ring mic-ring-2"></div>
+          </div>
         </div>
+
+        <!-- Meaning 3 (Below buttons) -->
+        <div class="word-meaning meanings-below" id="meaningsBelow"></div>
 
         <!-- Simulated Visualizer -->
         <div class="visualizer" id="micVisualizer">
@@ -1262,6 +1347,7 @@
       state.targetWord = savedWord;
       targetWordDisplay.textContent = savedWord;
       wordInput.value = savedWord;
+      loadWordDetails(savedWord);
 
       // 5. Speech Recognition Compatibility Checking
       if (!isRecognitionSupported) {
@@ -1324,6 +1410,7 @@
       state.targetWord = trimmed;
       targetWordDisplay.textContent = trimmed;
       localStorage.setItem('active_practice_word', trimmed);
+      loadWordDetails(trimmed);
       
       // Reset practice indicators
       clearPracticeCardStyles();
@@ -1332,6 +1419,152 @@
       targetWordDisplay.style.animation = 'none';
       targetWordDisplay.offsetHeight; // trigger reflow
       targetWordDisplay.style.animation = 'fadeIn 0.5s ease-out';
+    }
+
+    // Word Dictionary Cache & API Fetchers
+    function getCachedWordDetails(word) {
+      try {
+        const cacheStr = localStorage.getItem('word_details_cache');
+        if (cacheStr) {
+          const cache = JSON.parse(cacheStr);
+          const cached = cache[word];
+          if (cached) {
+            return {
+              ipa: cached.ipa,
+              definitions: cached.definitions !== undefined ? cached.definitions : cached.meaning
+            };
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse word details cache', e);
+      }
+      return null;
+    }
+
+    function setCachedWordDetails(word, details) {
+      try {
+        const cacheStr = localStorage.getItem('word_details_cache') || '{}';
+        const cache = JSON.parse(cacheStr);
+        cache[word] = details;
+        localStorage.setItem('word_details_cache', JSON.stringify(cache));
+      } catch (e) {
+        console.warn('Failed to save word details cache', e);
+      }
+    }
+
+    // Displays phonetic IPA and meaning properties split above/below
+    function displayWordDetails(ipa, definitions) {
+      const ipaEl = document.getElementById('targetWordIpa');
+      const aboveEl = document.getElementById('meaningsAbove');
+      const belowEl = document.getElementById('meaningsBelow');
+      
+      ipaEl.textContent = ipa ? ipa : '';
+      ipaEl.style.display = ipa ? 'inline-block' : 'none';
+      
+      aboveEl.innerHTML = '';
+      belowEl.innerHTML = '';
+      
+      if (!definitions) {
+        aboveEl.style.display = 'none';
+        belowEl.style.display = 'none';
+        return;
+      }
+      
+      // Fallback if cached value is old schema string meaning
+      if (typeof definitions === 'string') {
+        aboveEl.innerHTML = `<div class="meaning-item">${escapeHTML(definitions)}</div>`;
+        aboveEl.style.display = 'flex';
+        belowEl.style.display = 'none';
+        return;
+      }
+      
+      if (definitions.length === 0) {
+        aboveEl.innerHTML = '<div class="meaning-item">Definition not found.</div>';
+        aboveEl.style.display = 'flex';
+        belowEl.style.display = 'none';
+        return;
+      }
+      
+      // Render 1 & 2 above
+      let aboveHTML = '';
+      const limitAbove = Math.min(definitions.length, 2);
+      for (let i = 0; i < limitAbove; i++) {
+        const def = definitions[i];
+        const posHTML = def.pos ? `<span class="pos-tag">${escapeHTML(def.pos)}</span>` : '';
+        aboveHTML += `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
+      }
+      aboveEl.innerHTML = aboveHTML;
+      aboveEl.style.display = aboveHTML ? 'flex' : 'none';
+      
+      // Render 3 below
+      if (definitions.length >= 3) {
+        const def = definitions[2];
+        const posHTML = def.pos ? `<span class="pos-tag">${escapeHTML(def.pos)}</span>` : '';
+        belowEl.innerHTML = `<div class="meaning-item">${posHTML}${escapeHTML(def.definition)}</div>`;
+        belowEl.style.display = 'block';
+      } else {
+        belowEl.style.display = 'none';
+      }
+    }
+
+    async function loadWordDetails(word) {
+      const cleanWord = word.trim().toLowerCase();
+      if (!cleanWord) return;
+
+      const cached = getCachedWordDetails(cleanWord);
+      if (cached) {
+        displayWordDetails(cached.ipa, cached.definitions);
+        return;
+      }
+
+      // Show Loading indicators
+      displayWordDetails('...', [{ pos: '', definition: 'Loading definition...' }]);
+
+      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanWord)}`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          // Word details fallback if missing
+          const fallback = { ipa: '', definitions: [] };
+          setCachedWordDetails(cleanWord, fallback);
+          displayWordDetails(fallback.ipa, fallback.definitions);
+          return;
+        }
+
+        const data = await response.json();
+        const entry = data[0] || {};
+
+        // Extract IPA
+        let ipa = entry.phonetic || '';
+        if (!ipa && entry.phonetics) {
+          const withText = entry.phonetics.find(p => p.text);
+          if (withText) ipa = withText.text;
+        }
+
+        // Extract up to 3 definitions
+        const definitions = [];
+        if (entry.meanings) {
+          for (const m of entry.meanings) {
+            const pos = m.partOfSpeech || '';
+            for (const d of m.definitions || []) {
+              if (definitions.length < 3) {
+                definitions.push({
+                  pos: pos,
+                  definition: d.definition
+                });
+              }
+            }
+          }
+        }
+
+        const details = { ipa, definitions };
+        setCachedWordDetails(cleanWord, details);
+        displayWordDetails(details.ipa, details.definitions);
+      } catch (err) {
+        console.error('Failed to load dictionary API data', err);
+        // Show fallback but don't cache to allow retry
+        displayWordDetails('', [{ pos: '', definition: 'Temporary definition error' }]);
+      }
     }
 
     setWordBtn.addEventListener('click', setTargetWord);
@@ -1414,7 +1647,7 @@
       const circle = document.querySelector('.progress-ring__circle');
       if (!circle) return;
       
-      const circumference = 2 * Math.PI * 43; // ~270.176
+      const circumference = 2 * Math.PI * 35; // ~219.91
       circle.style.strokeDasharray = `${circumference} ${circumference}`;
       circle.style.strokeDashoffset = circumference;
       
@@ -1438,7 +1671,7 @@
       const circle = document.querySelector('.progress-ring__circle');
       if (!circle) return;
       
-      const circumference = 2 * Math.PI * 43;
+      const circumference = 2 * Math.PI * 35;
       circle.style.strokeDashoffset = circumference;
     }
 
