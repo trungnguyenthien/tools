@@ -1157,11 +1157,6 @@
         </div>
 
         <div class="status-text" id="statusText" aria-live="polite">Tap microphone and speak</div>
-        
-        <!-- Differences Diff Output Block -->
-        <div class="diff-section" id="diffContainer" style="display: none;">
-          <div class="diff-value" id="spokenDiffHTML">practice</div>
-        </div>
 
         <!-- Voice Accent Selector Button-styled Dropdown -->
         <div class="voice-picker-container">
@@ -1247,8 +1242,6 @@
     const micBtn = document.getElementById('micBtn');
     const micVisualizer = document.getElementById('micVisualizer');
     const statusText = document.getElementById('statusText');
-    const diffContainer = document.getElementById('diffContainer');
-    const spokenDiffHTML = document.getElementById('spokenDiffHTML');
     const practiceCard = document.getElementById('practiceCard');
     
     // Modal Dialog DOM Elements
@@ -1272,8 +1265,16 @@
       
       availableVoices = window.speechSynthesis.getVoices();
       
-      // Filter for English voices
-      const englishVoices = availableVoices.filter(voice => voice.lang.toLowerCase().startsWith('en'));
+      // Filter for US and UK English voices only
+      const englishVoices = availableVoices.filter(voice => {
+        const langUpper = voice.lang.toUpperCase();
+        const nameUpper = voice.name.toUpperCase();
+        
+        const isUS = langUpper.includes('US') || nameUpper.includes('US');
+        const isUK = langUpper.includes('GB') || langUpper.includes('UK') || nameUpper.includes('UK') || nameUpper.includes('GREAT BRITAIN');
+        
+        return isUS || isUK;
+      });
       
       // Clear original options except default
       voiceSelect.innerHTML = '<option value="">Default English Accent</option>';
@@ -1284,12 +1285,10 @@
         
         // Enhance label readability
         let accentLabel = 'English';
-        if (voice.lang.includes('US') || voice.name.includes('US')) accentLabel = 'US Accent';
-        else if (voice.lang.includes('GB') || voice.name.includes('UK') || voice.name.includes('Great Britain')) accentLabel = 'UK Accent';
-        else if (voice.lang.includes('AU') || voice.name.includes('Australia')) accentLabel = 'Australia Accent';
-        else if (voice.lang.includes('IN') || voice.name.includes('India')) accentLabel = 'India Accent';
-        else if (voice.lang.includes('CA') || voice.name.includes('Canada')) accentLabel = 'Canada Accent';
-        else if (voice.lang.includes('IE') || voice.name.includes('Ireland')) accentLabel = 'Ireland Accent';
+        const langUpper = voice.lang.toUpperCase();
+        const nameUpper = voice.name.toUpperCase();
+        if (langUpper.includes('US') || nameUpper.includes('US')) accentLabel = 'US Accent';
+        else if (langUpper.includes('GB') || langUpper.includes('UK') || nameUpper.includes('UK') || nameUpper.includes('GREAT BRITAIN')) accentLabel = 'UK Accent';
         
         option.textContent = `${voice.name} (${accentLabel})`;
         
@@ -1583,7 +1582,6 @@
       practiceCard.classList.remove('flash-success', 'flash-error');
       resultBadge.className = 'result-badge';
       resultBadge.innerHTML = '';
-      diffContainer.style.display = 'none';
       statusText.textContent = isRecognitionSupported ? 'Tap microphone and speak' : 'Voice Practice unavailable.';
     }
 
@@ -1795,9 +1793,6 @@
 
       showFeedback(outcome);
 
-      // Display transcript difference comparison analysis
-      displayComparison(state.targetWord, transcript);
-
       if (!isCorrect) {
         speakAgainPrompt();
       }
@@ -1845,67 +1840,6 @@
       setTimeout(() => {
         state.isAnimating = false;
       }, 1000);
-    }
-
-    // Dynamic diff formatting between expected and spoken phrases
-    function displayComparison(target, spoken) {
-      const targetClean = target.toLowerCase().replace(/[^a-zA-Z\s'-]/g, '').trim();
-      const spokenClean = spoken.toLowerCase().replace(/[^a-zA-Z\s'-]/g, '').trim();
-      
-      let htmlContent = '';
-
-      if (targetClean.includes(' ') || spokenClean.includes(' ')) {
-        // Phrase Word level comparison
-        const targetWords = targetClean.split(/\s+/);
-        const spokenWords = spokenClean.split(/\s+/);
-        const diffWords = [];
-        
-        const maxLen = Math.max(targetWords.length, spokenWords.length);
-        for (let i = 0; i < maxLen; i++) {
-          const tW = targetWords[i] || '';
-          const sW = spokenWords[i] || '';
-          
-          if (tW === sW) {
-            diffWords.push(`<span class="diff-match">${sW}</span>`);
-          } else if (!tW) {
-            // User spoke extra words
-            diffWords.push(`<span class="diff-extra" title="Extra word">${sW}</span>`);
-          } else if (!sW) {
-            // User missed a word
-            diffWords.push(`<span class="diff-miss" title="Missing word">${tW}</span>`);
-          } else {
-            // Mismatch
-            diffWords.push(`<span class="diff-mismatch" title="Expected: ${tW}">${sW} <span class="diff-expected">(${tW})</span></span>`);
-          }
-        }
-        htmlContent = diffWords.join(' ');
-      } else {
-        // Single word Character level comparison
-        const diffChars = [];
-        const maxLen = Math.max(targetClean.length, spokenClean.length);
-        
-        for (let i = 0; i < maxLen; i++) {
-          const tChar = targetClean[i] || '';
-          const sChar = spokenClean[i] || '';
-          
-          if (tChar === sChar) {
-            diffChars.push(`<span class="diff-char-match">${sChar}</span>`);
-          } else if (!tChar) {
-            // Extra letters
-            diffChars.push(`<span class="diff-char-extra" title="Extra letter">${sChar}</span>`);
-          } else if (!sChar) {
-            // Missing letters
-            diffChars.push(`<span class="diff-char-miss" title="Missing expected '${tChar}'">${tChar}</span>`);
-          } else {
-            // Mismatch letters
-            diffChars.push(`<span class="diff-char-mismatch" title="Expected: ${tChar}">${sChar}</span>`);
-          }
-        }
-        htmlContent = diffChars.join('');
-      }
-
-      spokenDiffHTML.innerHTML = htmlContent || `<em>No speech matching text</em>`;
-      diffContainer.style.display = 'block';
     }
 
     // Modal Dialog opening and closing logic
