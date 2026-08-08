@@ -208,20 +208,20 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       z-index: 1;
+      box-sizing: border-box;
+      border-radius: inherit;
     }
 
     .flash-success .flash-overlay {
       background: radial-gradient(circle, var(--success-bg) 0%, transparent 80%);
       opacity: 1;
       border: 2px solid var(--success-color);
-      border-radius: 24px;
     }
 
     .flash-error .flash-overlay {
       background: radial-gradient(circle, var(--error-bg) 0%, transparent 80%);
       opacity: 1;
       border: 2px solid var(--error-color);
-      border-radius: 24px;
     }
 
     /* Compact Word Input Row with icon button */
