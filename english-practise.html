@@ -411,16 +411,16 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 2rem;
-      margin: 0.5rem 0;
+      gap: 2.2rem;
+      margin: 1.2rem 0;
       flex-shrink: 0;
       width: 100%;
     }
 
     /* Voice Button (Green) */
     .voice-btn {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: var(--success-color);
       border: none;
@@ -430,12 +430,12 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 6px 16px var(--success-glow);
+      box-shadow: 0 8px 20px var(--success-glow);
     }
 
     .voice-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 8px 20px var(--success-glow);
+      box-shadow: 0 10px 24px var(--success-glow);
     }
 
     .voice-btn:active {
@@ -449,8 +449,8 @@
     }
 
     .voice-btn svg {
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2.5;
@@ -459,8 +459,8 @@
     /* Record Button Wrapper */
     .record-wrapper {
       position: relative;
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -468,8 +468,8 @@
 
     /* Mic Button (Blue, Red when recording) */
     .mic-btn {
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: var(--primary-color);
       border: none;
@@ -481,12 +481,12 @@
       position: relative;
       z-index: 2;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 6px 16px var(--primary-glow);
+      box-shadow: 0 8px 20px var(--primary-glow);
     }
 
     .mic-btn:hover:not(:disabled) {
       transform: scale(1.05);
-      box-shadow: 0 8px 20px var(--primary-glow);
+      box-shadow: 0 10px 24px var(--primary-glow);
     }
 
     .mic-btn:active:not(:disabled) {
@@ -501,8 +501,8 @@
     }
 
     .mic-btn svg {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2.2;
@@ -510,7 +510,7 @@
 
     .mic-btn.listening {
       background: var(--error-color) !important;
-      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35) !important;
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.35) !important;
     }
 
     /* Circular Progress Ring around mic button */
@@ -521,8 +521,8 @@
       transform: translate(-50%, -50%) rotate(-90deg);
       z-index: 1;
       pointer-events: none;
-      width: 80px;
-      height: 80px;
+      width: 90px;
+      height: 90px;
     }
 
     .progress-ring__track {
@@ -539,16 +539,16 @@
       fill: transparent;
       stroke: var(--error-color);
       stroke-linecap: round;
-      /* 2 * Math.PI * 35 = 219.911 */
-      stroke-dasharray: 220;
-      stroke-dashoffset: 220;
+      /* 2 * Math.PI * 39 = 245.04 */
+      stroke-dasharray: 245;
+      stroke-dashoffset: 245;
       transition: stroke-dashoffset 0.03s linear;
     }
 
     .mic-ring {
       position: absolute;
-      width: 64px;
-      height: 64px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: var(--error-color);
       opacity: 0;
@@ -1129,9 +1129,9 @@
 
           <!-- Record Microphone Wrapper (Blue, Red when recording) -->
           <div class="record-wrapper">
-            <svg class="progress-ring" width="80" height="80">
-              <circle class="progress-ring__track" cx="40" cy="40" r="35" stroke-width="3" />
-              <circle class="progress-ring__circle" cx="40" cy="40" r="35" stroke-width="3" />
+            <svg class="progress-ring" width="90" height="90">
+              <circle class="progress-ring__track" cx="45" cy="45" r="39" stroke-width="3.5" />
+              <circle class="progress-ring__circle" cx="45" cy="45" r="39" stroke-width="3.5" />
             </svg>
             <button class="mic-btn" id="micBtn" aria-label="Start recording speech" title="Tap to Speak">
               <svg viewBox="0 0 24 24">
@@ -1160,7 +1160,6 @@
         
         <!-- Differences Diff Output Block -->
         <div class="diff-section" id="diffContainer" style="display: none;">
-          <div class="diff-title">Pronunciation Analysis</div>
           <div class="diff-value" id="spokenDiffHTML">practice</div>
         </div>
 
@@ -1647,7 +1646,7 @@
       const circle = document.querySelector('.progress-ring__circle');
       if (!circle) return;
       
-      const circumference = 2 * Math.PI * 35; // ~219.91
+      const circumference = 2 * Math.PI * 39; // ~245.04
       circle.style.strokeDasharray = `${circumference} ${circumference}`;
       circle.style.strokeDashoffset = circumference;
       
@@ -1671,7 +1670,7 @@
       const circle = document.querySelector('.progress-ring__circle');
       if (!circle) return;
       
-      const circumference = 2 * Math.PI * 35;
+      const circumference = 2 * Math.PI * 39;
       circle.style.strokeDashoffset = circumference;
     }
 
